@@ -1,0 +1,15 @@
+Name: cmp
+Version: 0.1
+Synopsis: nanopass stuff
+Authors: Nicolas <nmanichon@gmail.com>
+License: GPL
+
+OASISFormat: 0.4
+BuildTools: ocamlbuild
+Plugins: META (0.4), DevFiles (0.4)
+
+Executable "cmp"
+    Path: src/
+    MainIs: cmp.ml
+    CompiledObject: best
+    BuildDepends: ppx_nanocaml

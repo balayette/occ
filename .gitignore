@@ -1,0 +1,8 @@
+_build/
+*.native
+setup.data
+setup.log
+Makefile
+configure
+setup.ml
+**/*.swp
