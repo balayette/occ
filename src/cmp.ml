@@ -1,64 +1,118 @@
+type types =
+  [ `Integer of int
+  | `Floating of float
+  | `Character of char
+  | `String of string
+  | `UserDefined of string
+  | `Void
+  ]
+
+type punctuator_types =
+    OParen
+  | CParen
+  | Plus
+  | Minus
+  | Equal
+
 module%language Base = struct
-  type expr = [ `Method of string * (expr list)
-              | `Let of string * expr
-              | `Call of string * expr
-              | `Value of int
-              | `Test of int
-              ]
+  type statement =
+    [ `Assignment of string * statement
+    | `Call of string * (statement list)
+    | `Constant of types
+    | `Condition of condition
+    | `FunDecl of types * string * (string list) * (types list) * (statement list)
+    | `Predicate of predicate
+    ]
+  and condition =
+    [ `If of predicate * (statement list) * condition
+    (*if(predicate){statement list} (else(if))*)
+
+    | `ElseIf of predicate * (statement list) * condition
+    (* else if (predicate) {statement list} (else(if)) *)
+
+    | `Else of statement list
+    (* else {statement list} equivalent to else if (true) {statement list}*)
+    | `End
+    ]
+  and predicate =
+    [ `Equality of statement * statement
+    | `LowerThan of statement * statement
+    | `Boolean of bool
+    ]
 end
 
-module%language Base0 = struct
+module%language BaseWithoutElse = struct
   include Base
-  type expr = {
-    del : [`Test of int]
+  type condition = {
+    del : [`Else of statement list
+          ]
   }
 end
 
-let[@pass Base => Base0] test_pass =
+let[@pass Base => BaseWithoutElse] remove_else =
   [%passes
-    let[@entry] rec expr = function
-      | `Test (i) -> (
-          Printf.printf "Removing `Test %d\n" i;
-          `Value i
-        )
+
+    let[@entry] rec statement = function
+      | `Assignment (s, st [@r]) -> `Assignment (s, st)
+      | `Call (s, st [@r][@l]) -> `Call (s, st)
+    and predicate = function
+      | `Boolean b -> `Boolean b
+    and condition = function
+      | `Else (sl [@r][@l]) -> `ElseIf ((`Boolean (true)), sl, `End)
   ]
 
-let rec print_lang ?(lev="") exp = match exp with
-  | `Method (s, el) -> (
-      Printf.printf "%sMethod : %s\n" lev s;
-      let rec aux = function
-        | e::l -> print_lang ~lev:(lev ^ " ") e; aux l
-        | [] -> ()
-      in aux el
+let print_type = function
+  | `Integer (i) -> Printf.printf "int"
+  | `Floating (f) -> Printf.printf "float"
+  | `Character (c) -> Printf.printf "char"
+  | `String (s) -> Printf.printf "string"
+  | `UserDefined (s) -> Printf.printf "%s" s
+  | `Void -> print_string "void"
+
+let print_constant = function
+  | `Integer (i) -> Printf.printf "int:%d" i
+  | `Floating (f) -> Printf.printf "float:%f" f
+  | `Character (c) -> Printf.printf "char:%c" c
+  | `String (s) -> Printf.printf "string:%s" s
+  | `UserDefined (s) -> Printf.printf "User defined:%s" s
+  | `Void -> print_string "void:()"
+
+let rec print_lang ?(lev="") lang =
+  let rec print_l lev = function
+    | e::l -> print_lang ~lev:lev e; print_l lev l
+    | [] -> ()
+
+  and print_args lev (ns : string list) (ts : types list) = match (ns, ts) with
+    | [], [] -> ()
+    | e::_, [] -> Printf.printf "%s This function is not valid\n" lev;
+    | [], e::_ -> Printf.printf "%s This function is not valid\n" lev;
+    | n::l1, t::l2 -> Printf.printf "%s" lev; print_type t; Printf.printf " %s, " n; print_args lev l1 l2
+  in
+  match lang with
+  | `Assignment (s, st) -> Printf.printf "%s%s = " lev s; print_lang ~lev:(lev ^ " ") st;
+  | `Call (s, st) -> Printf.printf "%s%s(" lev s; print_l lev st; print_string ")\n"
+  | `Constant (t) -> print_constant t;
+  | `FunDecl (t, n, argnames, argtypes, stl) -> (
+      print_type t; Printf.printf " %s(" n;
+      print_args lev argnames argtypes;
+      print_string "){\n";
+      print_l (lev ^ " ") stl;
+      print_string "\n}\n"
     )
-  | `Let (s, e) -> (
-      Printf.printf "%sLet %s = ...\n" lev s;
-      print_lang ~lev:(" " ^ lev) e
-    )
-  | `Value (i) -> (
-      Printf.printf "%s= %i\n" lev i
-    )
-  | `Call (s, e) -> (
-      Printf.printf "%s%s(\n" lev s;
-      print_lang ~lev:(lev ^ " ") e;
-      Printf.printf "%s)\n" lev
-    )
-  | _ -> ()
+  | _ -> print_string "Unknown\n"
 
 let () =
-  print_string "CMP\n";
-  (* let a = 5
-     print a
-  *)
   let input =
-    `Method ("test",
-             [
-               (`Let ("a", (`Test 5)));
-               (`Call ("print", (`Value 5)))
-             ])
+    `FunDecl (`Integer (0), "myfunc", ["input"], [`Integer (0)], [
+        `Condition (`If  (`Boolean (false)), [
+            `Assignment ("a", `Constant (`Integer 5))
+          ],
+                         `Condition (`Else ([
+                             `Assignment ("e", `Constant (`Integer 6))
+                           ])))
+      ])
   in
   print_lang input;
-
-  let output = test_pass input in
+  let output = remove_else input in
   print_lang output;
-  print_string "DONE\n";;
+  print_string "DONE\n"
