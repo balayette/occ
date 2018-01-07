@@ -1,5 +1,3 @@
-open Batteries
-
 type user_struct = {
   name : string;
   size : int;
@@ -15,9 +13,10 @@ type user_struct = {
     | Void of unit
 
 module%language Base = struct
-  type basic =
-    [ `File of toplevel list
-    | `Program of basic list
+  type program = [ `Program of file list
+                 ]
+  and file =
+    [ `File of string * (toplevel list)
     ]
   and toplevel =
     [ `PreprocessingDirective of string
@@ -54,12 +53,12 @@ module%language WithoutElse = struct
     del : [`Else of (statement list)]
   }
 end
-
 let[@pass Base => WithoutElse] remove_else =
   [%passes
-    let[@entry] rec basic = function
+    let[@entry] rec program = function
       | `Program (bll [@r][@l]) -> `Program (bll)
-      | `File (toplvll [@r][@l]) -> `File (toplvll)
+    and file = function
+      | `File (n, toplvll [@r][@l]) -> `File (n, toplvll)
     and toplevel = function
       | `FunDecl (a, b, c, stl [@r][@l]) -> `FunDecl (a, b, c, stl)
     and values = function
@@ -72,6 +71,32 @@ let[@pass Base => WithoutElse] remove_else =
       | `Test (t [@r]) -> `Test t
     and predicate = function
       | `Boolean b -> `Boolean b
+  ]
+
+module%language FileListToHashTable = struct
+  include WithoutElse
+  type program = {
+    del : [ `Program of file list];
+    add : [ `Program of ((string, file) Hashtbl.t)]
+  }
+end
+
+let[@pass WithoutElse => FileListToHashTable] list_to_htable =
+  let tbl_of_files fl =
+    let rec aux tbl fl = match fl with
+      | e::l -> (
+          match e with `File (s, tll) -> (
+              Hashtbl.add tbl s (`File (s, tll))
+            )
+        ); aux tbl l
+      | [] -> tbl
+    in aux (Hashtbl.create (List.length fl)) fl
+  in
+  [%passes
+    let[@entry] rec program = function
+      | `Program (fl) -> (
+          `Program (tbl_of_files (fl))
+        )
   ]
 
 let string_of_builtin_types = function
@@ -101,41 +126,35 @@ let string_of_builtin_types_values = function
 
 let input =
   `Program ([
-      `File (
-        [
-          `FunDecl (Void (), "myfunc", [], [
-              `Test (
-                `If (`Boolean (false), [
-                    `VarDecl (Integer 0, "ifvar", `Constant (Integer 1))
-                  ], `Else ([
-                    `VarDecl (Integer 0, "elsevar", `Constant (Integer 2))
-                  ]))
-              )
-            ])
-        ])
+      `File ("main.c",
+             [
+               `FunDecl (Void (), "myfunc", [], [
+                   `Test (
+                     `If (`Boolean (false), [
+                         `VarDecl (Integer 0, "ifvar", `Constant (Integer 1))
+                       ], `Else ([
+                         `VarDecl (Integer 0, "elsevar", `Constant (Integer 2))
+                       ]))
+                   )
+                 ])
+             ])
     ])
 
 let expected_output =
   `Program ([
-      `File (
-        [
-          `FunDecl (Void (), "myfunc", [], [
-              `Test (
-                `If (`Boolean (false), [
-                    `VarDecl (Integer 0, "ifvar", `Constant (Integer 1))
-                  ], `ElseIf (`Boolean (true), [
-                    `VarDecl (Integer 0, "elsevar", `Constant (Integer 2))
-                  ], `End))
-              )
-            ])
-        ])
+      `File ("main.c",
+             [
+               `FunDecl (Void (), "myfunc", [], [
+                   `Test (
+                     `If (`Boolean (false), [
+                         `VarDecl (Integer 0, "ifvar", `Constant (Integer 1))
+                       ], `ElseIf (`Boolean (true), [
+                         `VarDecl (Integer 0, "elsevar", `Constant (Integer 2))
+                       ], `End))
+                   )
+                 ])
+             ])
     ])
 
 let () =
-  print_endline (dump input);
-  let output = remove_else input
-  in (print_endline (dump output)); print_string "DONE\n";
-  if output = expected_output then
-    print_string "PASSED\n"
-  else
-    print_string "FAILED\n"
+  input |> remove_else |> list_to_htable |> Batteries.dump |> print_endline
