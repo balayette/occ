@@ -12,4 +12,4 @@ Executable "cmp"
     Path: src/
     MainIs: compiler.ml
     CompiledObject: best
-    BuildDepends: ppx_nanocaml, batteries
+    BuildDepends: ppx_nanocaml, batteries, menhir, ocamllex

@@ -130,6 +130,7 @@ let input =
              [
                `FunDecl (Void (), "myfunc", [], [
                    `Test (
+
                      `If (`Boolean (false), [
                          `VarDecl (Integer 0, "ifvar", `Constant (Integer 1))
                        ], `Else ([

@@ -2,7 +2,10 @@ _build/
 *.native
 setup.data
 setup.log
-Makefile
 configure
 setup.ml
+.depend*
+*.cmx
+*.cmo
+*.cmi
 **/*.swp
