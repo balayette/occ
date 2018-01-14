@@ -80,21 +80,20 @@ $(EXEC).opt: $(OBJS)
 
 clean::
 	rm -f $(SRC_DIR)/*.cm[iox] *~ .*~ #*#
+	rm -f $(SRC_DIR)/*.o
 	rm -f $(EXEC)
 	rm -f $(EXEC).opt
 
 .depend.input: Makefile
-	@echo -n '--Checking Ocaml input files: '
 	@(ls $(SMLIY) $(SMLIY:.ml=.mli) 2>/dev/null || true) \
 	     >  .depend.new
 	@diff .depend.new .depend.input 2>/dev/null 1>/dev/null && \
-	    (echo 'unchanged'; rm -f .depend.new) || \
-	    (echo 'changed'; mv .depend.new .depend.input)
+	    (rm -f .depend.new) || \
+	    (mv .depend.new .depend.input)
 
 depend: .depend
 
 .depend:: $(SMLIY) .depend.input
-	@echo '--Re-building dependencies'
 	$(CAMLDEP) $(SMLIY) $(SMLIY:.ml=.mli) > .depend
 
 include .depend
