@@ -10,17 +10,17 @@ and toplevel =
     FunDecl of builtin_types * string * (string * builtin_types) list * (statement list)
 
 let print_ast ast =
-  let rec print_toplevel = function
+  let rec print_toplevel lev = function
     | FunDecl (t, id, params, stmts) -> (
-        Printf.printf "%s %s(){\n" (string_of_builtin_types t) id;
-        List.iter print_statement stmts;
-        Printf.printf "\n}"
+        Printf.printf "%sFUNDECL %s %s PARAMS %s [\n" lev (string_of_builtin_types t) id "None";
+        List.iter (print_statement (lev ^ "  ")) stmts;
+        Printf.printf "%s]" lev
       )
-  and print_statement = function
+  and print_statement lev = function
     | Return v -> (
-        print_string "return ";
+        Printf.printf "%sRETURN " lev;
         print_values v;
-        print_string ";"
+        print_endline "";
       )
   and print_values = function
     | Constant t -> (
@@ -29,5 +29,5 @@ let print_ast ast =
   in
   match ast with
   | Funcs tl -> (
-      List.iter print_toplevel tl
+      List.iter (print_toplevel "") tl
     )

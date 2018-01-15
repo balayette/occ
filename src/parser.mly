@@ -4,6 +4,7 @@
 %token LPARENT
 %token RBRACE
 %token RPARENT
+%token NEWLINE
 
 %token INT_KEYWORD
 
@@ -24,12 +25,12 @@
 ;
   method_main:
     INT_KEYWORD; id = IDENTIFIER; LPARENT RPARENT LBRACE;
-                li = statement; RBRACE { Ast.FunDecl (Types.Integer 0, id, [], [li]) }
+                li = statement_list; RBRACE { Ast.FunDecl (Types.Integer 0, id, [], li) }
 ;
 
-(*   statement_list: *)
-(*     li = separated_list(SEMICOLON, statement) { li } *)
-(* ; *)
+  statement_list:
+    li = list(statement) { li }
+;
   statement:
     RETURN; k = INT_LITERAL; SEMICOLON {Ast.Return (Ast.Constant (Types.Integer k))}
 ;
