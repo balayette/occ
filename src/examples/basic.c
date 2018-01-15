@@ -1,5 +1,7 @@
 int test(int arg){
-    return "ded";
+    int a = 5;
+    string b = "e";
+    return;
 }
 
 void b(void c, int b){

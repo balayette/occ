@@ -11,6 +11,7 @@
 %token STRING_KEYWORD
 
 %token <string> IDENTIFIER
+%token EQUAL
 
 %token <int> INT_LITERAL
 %token <string> STRING_LITERAL
@@ -38,6 +39,7 @@ function_call:
 type_keyword:
   | INT_KEYWORD {Types.Integer 0}
 | VOID_KEYWORD {Types.Void ()}
+| STRING_KEYWORD {Types.String ""}
 ;
 
 fun_call_param:
@@ -62,10 +64,15 @@ statement_list:
   li = separated_nonempty_list(SEMICOLON, statement) { li }
 ;
 
+declaration:
+  t = type_keyword; n = IDENTIFIER; EQUAL; s = statement { Ast.Declaration (t, n, s) }
+;
+
 statement:
    RETURN SEMICOLON { Ast.Return (Ast.Constant (Types.Void ())) }
   | RETURN; s = statement; SEMICOLON{ Ast.Return s}
   | c = function_call { c }
   | i = INT_LITERAL { Ast.Constant (Types.Integer i)}
   | s = STRING_LITERAL { Ast.Constant (Types.String s)}
+  | d = declaration { d }
 ;

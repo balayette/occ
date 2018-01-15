@@ -6,6 +6,7 @@ and statement =
     Return of statement
   | Constant of builtin_types
   | FunCall of string * (statement list)
+  | Declaration of builtin_types * string * statement
 and toplevel =
     FunDecl of builtin_types * string * (string * builtin_types) list * (statement list)
 
@@ -31,6 +32,11 @@ let print_ast ast =
       )
     | Constant t -> (
         print_string (string_of_builtin_types_values t)
+      )
+    | Declaration (t, n, s) -> (
+        Printf.printf "%sDECL %s %s = " lev (string_of_builtin_types t) n;
+        print_statement "" s;
+        Printf.printf "\n"
       )
   in
   match ast with
