@@ -22,7 +22,7 @@
 
   program:
 | EOF { None }
-  | funcs = function_declaration { Some (Ast.Funcs [funcs]) }
+  | funcs = nonempty_list(function_declaration); EOF { Some (Ast.Funcs funcs) }
 ;
 
   function_declaration:
@@ -42,13 +42,8 @@
  li = separated_list(COMMA, parameter) { li }
 ;
 
-(*   method_main: *)
-(*     INT_KEYWORD; id = IDENTIFIER; LPARENT RPARENT LBRACE; *)
-(*                 li = statement_list; RBRACE { Ast.FunDecl (Types.Integer 0, id, [], li) } *)
-(* ; *)
-
   statement_list:
-    li = list(statement) { li }
+    li = nonempty_list(statement) { li }
 ;
   statement:
     RETURN; k = INT_LITERAL; SEMICOLON {Ast.Return (Ast.Constant (Types.Integer k))}

@@ -16,7 +16,7 @@ let print_ast ast =
         List.iter (function (n, t) -> Printf.printf "%s %s, " (string_of_builtin_types t) n) params;
         print_string ") [\n";
         List.iter (print_statement (lev ^ "  ")) stmts;
-        Printf.printf "%s]" lev
+        Printf.printf "%s]\n" lev
       )
   and print_statement lev = function
     | Return v -> (
