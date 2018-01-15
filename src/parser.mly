@@ -8,10 +8,12 @@
 
 %token INT_KEYWORD
 %token VOID_KEYWORD
+%token STRING_KEYWORD
 
 %token <string> IDENTIFIER
 
 %token <int> INT_LITERAL
+%token <string> STRING_LITERAL
 
 %token SEMICOLON
 %token EOF
@@ -20,31 +22,50 @@
 
 %%
 
-  program:
-| EOF { None }
-  | funcs = nonempty_list(function_declaration); EOF { Some (Ast.Funcs funcs) }
+program:
+  | EOF { None }
+| funcs = nonempty_list(function_declaration); EOF { Some (Ast.Funcs funcs) }
 ;
 
-  function_declaration:
-    t = type_keyword; name = IDENTIFIER; LPARENT; params = param_list; RPARENT LBRACE; li = statement_list; RBRACE {  Ast.FunDecl (t, name, params, li) }
+function_declaration:
+  t = type_keyword; name = IDENTIFIER; LPARENT; params = fun_param_list; RPARENT LBRACE; li = statement_list; RBRACE {  Ast.FunDecl (t, name, params, li) }
 ;
 
-  type_keyword:
-| INT_KEYWORD {Types.Integer 0}
-  | VOID_KEYWORD {Types.Void ()}
+function_call:
+  name = IDENTIFIER; LPARENT; params = fun_call_param_list; RPARENT { Ast.FunCall (name, params) }
 ;
 
-  parameter:
-    t = type_keyword; name = IDENTIFIER { (name, t) }
+type_keyword:
+  | INT_KEYWORD {Types.Integer 0}
+| VOID_KEYWORD {Types.Void ()}
 ;
 
-  param_list:
- li = separated_list(COMMA, parameter) { li }
+fun_call_param:
+  a = INT_LITERAL { Ast.Constant (Types.Integer a) }
+| a = STRING_LITERAL {  Ast.Constant (Types.String a) }
+| a = function_call { a }
 ;
 
-  statement_list:
-    li = nonempty_list(statement) { li }
+fun_call_param_list:
+  li = separated_list(COMMA, fun_call_param) {li}
 ;
-  statement:
-    RETURN; k = INT_LITERAL; SEMICOLON {Ast.Return (Ast.Constant (Types.Integer k))}
+
+fun_parameter:
+  t = type_keyword; name = IDENTIFIER { (name, t) }
+;
+
+fun_param_list:
+  li = separated_list(COMMA, fun_parameter) { li }
+;
+
+statement_list:
+  li = separated_nonempty_list(SEMICOLON, statement) { li }
+;
+
+statement:
+   RETURN SEMICOLON { Ast.Return (Ast.Constant (Types.Void ())) }
+  | RETURN; s = statement; SEMICOLON{ Ast.Return s}
+  | c = function_call { c }
+  | i = INT_LITERAL { Ast.Constant (Types.Integer i)}
+  | s = STRING_LITERAL { Ast.Constant (Types.String s)}
 ;

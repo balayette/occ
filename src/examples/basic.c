@@ -1,7 +1,7 @@
 int test(int arg){
-    return 42;
+    return "ded";
 }
 
 void b(void c, int b){
-    return 55;
+    return a(1, 2, 3);
 }

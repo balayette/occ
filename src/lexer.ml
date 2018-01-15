@@ -2,6 +2,7 @@ open Parser
 
 let number = [%sedlex.regexp? '0'..'9']
 let letter = [%sedlex.regexp? 'a'..'z' | 'A'..'Z']
+let string_literal = [%sedlex.regexp? "\"", (Star letter), "\""]
 
 let rec lex lexbuf =
   let open Sedlex_menhir in
@@ -24,6 +25,10 @@ let rec lex lexbuf =
       let id = Sedlexing.Latin1.lexeme buf in
       update lexbuf; IDENTIFIER id
     )
+  | string_literal -> (
+      let str = Sedlexing.Latin1.lexeme buf in
+      update lexbuf; STRING_LITERAL (str)
+    )
   | eof -> update lexbuf; EOF
   | white_space -> update lexbuf; lex lexbuf
   | "\n" -> update lexbuf; new_line lexbuf; lex lexbuf
@@ -39,6 +44,8 @@ let string_of_token = function
   | COMMA -> ","
   | INT_LITERAL i -> Printf.sprintf "%d" i
   | INT_KEYWORD -> "int"
+  | STRING_KEYWORD -> "string"
+  | STRING_LITERAL s -> s
   | VOID_KEYWORD -> "void"
   | IDENTIFIER s -> Printf.sprintf "%s" s
   | EOF -> "EOF"
