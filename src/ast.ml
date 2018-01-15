@@ -12,7 +12,9 @@ and toplevel =
 let print_ast ast =
   let rec print_toplevel lev = function
     | FunDecl (t, id, params, stmts) -> (
-        Printf.printf "%sFUNDECL %s %s PARAMS %s [\n" lev (string_of_builtin_types t) id "None";
+        Printf.printf "%sFUNDECL %s %s PARAMS (" lev (string_of_builtin_types t) id;
+        List.iter (function (n, t) -> Printf.printf "%s %s, " (string_of_builtin_types t) n) params;
+        print_string ") [\n";
         List.iter (print_statement (lev ^ "  ")) stmts;
         Printf.printf "%s]" lev
       )

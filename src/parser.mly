@@ -4,9 +4,10 @@
 %token LPARENT
 %token RBRACE
 %token RPARENT
-%token NEWLINE
+%token COMMA
 
 %token INT_KEYWORD
+%token VOID_KEYWORD
 
 %token <string> IDENTIFIER
 
@@ -21,12 +22,30 @@
 
   program:
 | EOF { None }
-  | main = method_main { Some (Ast.Funcs [main]) }
+  | funcs = function_declaration { Some (Ast.Funcs [funcs]) }
 ;
-  method_main:
-    INT_KEYWORD; id = IDENTIFIER; LPARENT RPARENT LBRACE;
-                li = statement_list; RBRACE { Ast.FunDecl (Types.Integer 0, id, [], li) }
+
+  function_declaration:
+    t = type_keyword; name = IDENTIFIER; LPARENT; params = param_list; RPARENT LBRACE; li = statement_list; RBRACE {  Ast.FunDecl (t, name, params, li) }
 ;
+
+  type_keyword:
+| INT_KEYWORD {Types.Integer 0}
+  | VOID_KEYWORD {Types.Void ()}
+;
+
+  parameter:
+    t = type_keyword; name = IDENTIFIER { (name, t) }
+;
+
+  param_list:
+ li = separated_list(COMMA, parameter) { li }
+;
+
+(*   method_main: *)
+(*     INT_KEYWORD; id = IDENTIFIER; LPARENT RPARENT LBRACE; *)
+(*                 li = statement_list; RBRACE { Ast.FunDecl (Types.Integer 0, id, [], li) } *)
+(* ; *)
 
   statement_list:
     li = list(statement) { li }

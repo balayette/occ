@@ -1,4 +1,3 @@
-int main(){
+int test(int arg){
     return 42;
-    return 44;
 }

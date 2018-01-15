@@ -12,12 +12,14 @@ let rec lex lexbuf =
   | "}" -> update lexbuf; RBRACE
   | "(" -> update lexbuf; LPARENT
   | ")" -> update lexbuf; RPARENT
+  | "," -> update lexbuf; COMMA
   | "return" -> update lexbuf; RETURN
   | Plus number -> (
       let nbr = Sedlexing.Latin1.lexeme buf |> int_of_string in
       update lexbuf; INT_LITERAL nbr
     )
   | "int" -> INT_KEYWORD
+  | "void" -> VOID_KEYWORD
   | letter, (Star (letter | number)) -> (
       let id = Sedlexing.Latin1.lexeme buf in
       update lexbuf; IDENTIFIER id
@@ -34,8 +36,9 @@ let string_of_token = function
   | RBRACE -> "}"
   | LBRACE -> "{"
   | LPARENT -> "("
+  | COMMA -> ","
   | INT_LITERAL i -> Printf.sprintf "%d" i
   | INT_KEYWORD -> "int"
+  | VOID_KEYWORD -> "void"
   | IDENTIFIER s -> Printf.sprintf "%s" s
   | EOF -> "EOF"
-  | NEWLINE -> "\\n"

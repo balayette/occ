@@ -1,0 +1,12 @@
+(jbuild_version 1)
+(
+  executable(
+    (name compiler)
+    (libraries (batteries menhirLib sedlex))
+    (preprocess (pps (ppx_nanocaml sedlex.ppx)))
+  )
+)
+(menhir(
+  (modules (parser))
+  )
+)
