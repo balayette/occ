@@ -1,16 +1,4 @@
-type user_struct = {
-  name : string;
-  size : int;
-  fields : (string * builtin_types) list;
-} and
-  builtin_types =
-    | Integer of int
-    | Floating of float
-    | Character of char
-    | String of string
-    | Boolean of bool
-    | Struct of user_struct
-    | Void of unit
+open Types
 
 module%language Base = struct
   type program = [ `Program of file list
@@ -99,31 +87,6 @@ let[@pass WithoutElse => FileListToHashTable] list_to_htable =
         )
   ]
 
-let string_of_builtin_types = function
-  | Integer _ -> "int"
-  | Floating _ -> "float"
-  | Character _ -> "char"
-  | String _ -> "string"
-  | Boolean _ -> "bool"
-  | Struct s -> ("struct " ^ (s.name))
-  | Void _ -> "void"
-
-let string_of_struct s =
-  let rec aux fields = match fields with
-    | [] -> ""
-    | e::l -> match e with (n, t) -> (Printf.sprintf "\n%s %s" (string_of_builtin_types t) n) ^ (aux l)
-  in
-  Printf.sprintf "struct %s {%s\n}\n" s.name (aux s.fields)
-
-let string_of_builtin_types_values = function
-  | Integer i -> Printf.sprintf "int:%d" i
-  | Floating f -> Printf.sprintf "float:%f" f
-  | Character c -> Printf.sprintf "char:%c" c
-  | String s -> Printf.sprintf "string:%s" s
-  | Boolean b -> if b then "bool:true" else "bool:false"
-  | Struct st -> string_of_struct st
-  | Void _ -> "void"
-
 let input =
   `Program ([
       `File ("main.c",
@@ -156,6 +119,15 @@ let expected_output =
                  ])
              ])
     ])
+let input = "int main(){\n    return 42;\n}"
+
 
 let () =
-  input |> remove_else |> list_to_htable |> Batteries.dump |> print_endline
+  (* input |> remove_else |> list_to_htable |> Batteries.dump |> print_endline *)
+  (* Lexer.lex_string input |> Batteries.dump |> print_endline *)
+  let lexbuf = Sedlex_menhir.create_lexbuf ~file:"examples/basic.c" (Sedlexing.Latin1.from_string input) in
+  let res = Sedlex_menhir.sedlex_with_menhir Lexer.lex Parser.program lexbuf in
+  Batteries.dump res |> print_endline;
+  match res with
+  | None -> print_endline "Got no AST"
+  | Some ast -> Ast.print_ast ast

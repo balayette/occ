@@ -9,7 +9,8 @@
 #                                                                     #
 #*********************************************************************#
 
-SOURCES = src/compiler.ml src/parser.mly
+SOURCES = src/types.ml src/ast.ml src/parser.mly src/sedlex_menhir.ml \
+	src/lexer.ml src/compiler.ml
 SRC_DIR = src
 
 EXEC = compiler
@@ -21,7 +22,7 @@ CAMLDEP = ocamldep
 CAMLLEX = ocamllex
 CAMLYACC = menhir
 
-LIBS="batteries,ppx_nanocaml"
+LIBS="batteries,ppx_nanocaml,sedlex,menhirLib"
 
 all:: .depend.input .depend $(EXEC)
 

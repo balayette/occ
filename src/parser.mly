@@ -1,5 +1,3 @@
-%token MAIN_FUNC
-
 %token RETURN
 
 %token LBRACE
@@ -9,17 +7,29 @@
 
 %token INT_KEYWORD
 
-%token IDENTIFIER
+%token <string> IDENTIFIER
 
-%token <int32> INT_LITERAL
+%token <int> INT_LITERAL
 
 %token SEMICOLON
 %token EOF
 
-%start <int32 option> main_function
+%start <Ast.abstract_syntax_tree option> program
 
 %%
 
-                 main_function:
-| INT_KEYWORD IDENTIFIER LPARENT RPARENT LBRACE RETURN; i = INT_LITERAL; SEMICOLON RBRACE { Some i }
+  program:
 | EOF { None }
+  | main = method_main { Some (Ast.Funcs [main]) }
+;
+  method_main:
+    INT_KEYWORD; id = IDENTIFIER; LPARENT RPARENT LBRACE;
+                li = statement; RBRACE { Ast.FunDecl (Types.Integer 0, id, [], [li]) }
+;
+
+(*   statement_list: *)
+(*     li = separated_list(SEMICOLON, statement) { li } *)
+(* ; *)
+  statement:
+    RETURN; k = INT_LITERAL; SEMICOLON {Ast.Return (Ast.Constant (Types.Integer k))}
+;
