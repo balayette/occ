@@ -68,6 +68,8 @@ statement_list:
 
 declaration:
   t = type_keyword; n = IDENTIFIER; EQUAL; s = expression { Ast.DeclarationStatement (t, n, s) }
+| t = type_keyword; n = IDENTIFIER; LBRACKET; l = option(INT_LITERAL); RBRACKET; EQUAL; s = expression { Ast.DeclarationStatement((Types.Array (t, [], l)), n, s) }
+
 ;
 
 array_access:

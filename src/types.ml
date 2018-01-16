@@ -12,6 +12,11 @@ type user_struct = {
     | Struct of user_struct
     | Void of unit
     | Pointer of builtin_types
+    | Array of builtin_types * (builtin_types list) * int option
+
+let string_of_int_option = function
+  | Some x -> string_of_int x
+  | None -> ""
 
 let rec string_of_builtin_types = function
   | Integer _ -> "int"
@@ -22,6 +27,7 @@ let rec string_of_builtin_types = function
   | Struct s -> ("struct " ^ (s.name))
   | Void _ -> "void"
   | Pointer e -> "*" ^ (string_of_builtin_types e)
+  | Array (t, _, l) -> Printf.sprintf "%s[%s]" (string_of_builtin_types t) (string_of_int_option l)
 
 let string_of_struct s =
   let rec aux fields = match fields with
@@ -39,3 +45,7 @@ let rec string_of_builtin_types_values = function
   | Struct st -> string_of_struct st
   | Void _ -> "void"
   | Pointer e -> "*" ^ (string_of_builtin_types_values e)
+  | Array (t, e, l) -> (
+      let c = String.concat ", " (List.map (string_of_builtin_types_values) e) in
+      Printf.sprintf "%s[%s] {%s}" (string_of_builtin_types t) (string_of_int_option l) c;
+    )

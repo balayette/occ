@@ -1,4 +1,4 @@
-int test1(){
+void test1(){
     return;
 }
 
@@ -42,6 +42,12 @@ int test10(){
 int test11(){
     int a = *b;
     return *a;
+}
+
+int test12(){
+    int a[5] = funcall();
+    string a[] = funcall();
+    return 0;
 }
 
 int main(){

@@ -125,7 +125,6 @@ let () =
   let file = open_in Sys.argv.(1) in
   let lexbuf = Sedlex_menhir.create_lexbuf ~file:"examples/basic.c" (Sedlexing.Latin1.from_channel file) in
   let res = Sedlex_menhir.sedlex_with_menhir Lexer.lex Parser.program lexbuf in
-  Batteries.dump res |> print_endline;
   match res with
   | None -> print_endline "Got no AST"
   | Some ast -> print_string "Parsed AST : \n"; Ast.print_ast ast
