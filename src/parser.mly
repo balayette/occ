@@ -13,6 +13,12 @@
 %token VOID_KEYWORD
 %token STRING_KEYWORD
 
+%token PLUS
+%token MINUS
+
+%token SMALLER
+%token GREATER
+
 %token IF
 %token ELSE
 %token WHILE
@@ -107,8 +113,25 @@ if_stmt:
   IF; p = _if_predicate; sl = _if_body; esl = _else {  Ast.IfStatement (p, sl, esl) }
 ;
 
-  while_stmt:
-    WHILE; p = _if_predicate; sl = _if_body { Ast.WhileStatement (p, sl) }
+while_stmt:
+  WHILE; p = _if_predicate; sl = _if_body { Ast.WhileStatement (p, sl) }
+;
+
+arithmetic:
+  e1 = expression; PLUS; e2 = expression { Ast.Arithmetic (e1, (Ast.Plus), e2) }
+| e1 = expression; MINUS; e2 = expression { Ast.Arithmetic (e1, (Ast.Minus), e2 ) }
+;
+
+comparison_op:
+    EQUAL EQUAL { Ast.Equal }
+  | SMALLER { Ast.Smaller }
+  | GREATER { Ast.Greater }
+  | SMALLER EQUAL { Ast.SmallerOrEqual }
+  | GREATER EQUAL { Ast.GreaterOrEqual }
+;
+
+comparison:
+  e1 = expression; c = comparison_op; e2 = expression { Ast.Comparison (e1, c, e2) }
 ;
 
 expression:
@@ -118,6 +141,8 @@ expression:
   | a = array_access { a }
   | v = var_access { v }
   | d = dereference { d }
+  | a = arithmetic { a }
+  | c = comparison { c }
 ;
 
 statement:

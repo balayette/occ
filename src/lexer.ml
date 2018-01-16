@@ -17,7 +17,11 @@ let rec lex lexbuf =
   | "]" -> update lexbuf; RBRACKET
   | "*" -> update lexbuf; STAR
   | "," -> update lexbuf; COMMA
+  | "-" -> update lexbuf; MINUS
+  | "+" -> update lexbuf; PLUS
   | "=" -> update lexbuf; EQUAL
+  | "<" -> update lexbuf; SMALLER
+  | ">" -> update lexbuf; GREATER
   | "if" -> update lexbuf; IF
   | "else" -> update lexbuf; ELSE
   | "while" -> update lexbuf; WHILE
