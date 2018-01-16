@@ -18,6 +18,8 @@ let rec lex lexbuf =
   | "*" -> update lexbuf; STAR
   | "," -> update lexbuf; COMMA
   | "=" -> update lexbuf; EQUAL
+  | "if" -> update lexbuf; IF
+  | "else" -> update lexbuf; ELSE
   | "return" -> update lexbuf; RETURN
   | Plus number -> (
       let nbr = Sedlexing.Latin1.lexeme buf |> int_of_string in
@@ -63,3 +65,5 @@ let string_of_token = function
   | IDENTIFIER s -> Printf.sprintf "%s" s
   | EOF -> "EOF"
   | EQUAL -> "="
+  | IF -> "if"
+  | ELSE -> "else"

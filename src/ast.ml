@@ -7,6 +7,7 @@ and statement =
   | FunDeclaration of builtin_types * string * (string * builtin_types) list * statement list
   | FunCallStatement of expression (* FunCallStatement (FunCallExpression (...)) *)
   | DeclarationStatement of builtin_types * string * expression
+  | IfStatement of expression * (statement list) * (statement list)
 and expression =
     Constant of builtin_types
   | FunCallExpression of string * (expression list)
@@ -45,6 +46,15 @@ let print_ast ast =
         print_endline ";"
       )
     | FunDeclaration _ -> print_endline "Can't declare a function inside another function"
+    | IfStatement (e, sl, esl) -> (
+        Printf.printf "%sIF (" lev;
+        print_expression "" e;
+        print_endline "){";
+        List.iter (print_statement (lev ^ " ")) sl;
+        Printf.printf "%s}\n%sELSE{\n" lev lev;
+        List.iter (print_statement (lev ^ " ")) esl;
+        Printf.printf "%s}\n" lev
+     )
   and print_expression lev = function
     | Constant t -> Printf.printf "%s%s" lev (string_of_builtin_types_values t)
     | FunCallExpression (n, el) -> (

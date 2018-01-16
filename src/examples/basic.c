@@ -50,6 +50,12 @@ int test12(){
     return 0;
 }
 
+void test13(){
+    if(a){
+        return;
+    }
+}
+
 int main(){
     int b = fun("ddddd");
     test(b);

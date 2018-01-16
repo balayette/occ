@@ -13,6 +13,9 @@
 %token VOID_KEYWORD
 %token STRING_KEYWORD
 
+%token IF
+%token ELSE
+
 %token <string> IDENTIFIER
 %token EQUAL
 
@@ -84,6 +87,25 @@ dereference:
   STAR; e = expression { Ast.Dereference e }
 ;
 
+_if_predicate:
+  LPARENT; p = expression; RPARENT { p }
+;
+
+_if_body:
+  | LBRACE; sl = statement_list; RBRACE; { sl }
+  | s = statement { [s] }
+;
+
+_else:
+  ELSE LBRACE; sl = statement_list; RBRACE { sl }
+  | ELSE; s = statement { [s] }
+  | { [] }
+;
+
+if_stmt:
+  IF; p = _if_predicate; sl = _if_body; esl = _else {  Ast.IfStatement (p, sl, esl) }
+;
+
 expression:
   i = INT_LITERAL { Ast.Constant (Types.Integer i)}
   | s = STRING_LITERAL { Ast.Constant (Types.String s)}
@@ -98,4 +120,5 @@ statement:
   | RETURN; s = expression; SEMICOLON { Ast.ReturnStatement s}
   | c = function_call; SEMICOLON {  Ast.FunCallStatement c }
   | d = declaration; SEMICOLON { d }
+  | i = if_stmt { i }
 ;
