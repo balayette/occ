@@ -56,6 +56,14 @@ void test13(){
     }
 }
 
+void test14(){
+    while(b){
+        return;
+    }
+    while(z)
+        return;
+}
+
 int main(){
     int b = fun("ddddd");
     test(b);

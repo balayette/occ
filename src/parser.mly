@@ -15,6 +15,7 @@
 
 %token IF
 %token ELSE
+%token WHILE
 
 %token <string> IDENTIFIER
 %token EQUAL
@@ -106,6 +107,10 @@ if_stmt:
   IF; p = _if_predicate; sl = _if_body; esl = _else {  Ast.IfStatement (p, sl, esl) }
 ;
 
+  while_stmt:
+    WHILE; p = _if_predicate; sl = _if_body { Ast.WhileStatement (p, sl) }
+;
+
 expression:
   i = INT_LITERAL { Ast.Constant (Types.Integer i)}
   | s = STRING_LITERAL { Ast.Constant (Types.String s)}
@@ -121,4 +126,5 @@ statement:
   | c = function_call; SEMICOLON {  Ast.FunCallStatement c }
   | d = declaration; SEMICOLON { d }
   | i = if_stmt { i }
+  | w = while_stmt { w }
 ;

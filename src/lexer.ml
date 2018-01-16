@@ -20,6 +20,7 @@ let rec lex lexbuf =
   | "=" -> update lexbuf; EQUAL
   | "if" -> update lexbuf; IF
   | "else" -> update lexbuf; ELSE
+  | "while" -> update lexbuf; WHILE
   | "return" -> update lexbuf; RETURN
   | Plus number -> (
       let nbr = Sedlexing.Latin1.lexeme buf |> int_of_string in
@@ -46,24 +47,25 @@ let rec lex lexbuf =
     )
   | _ -> failwith "THIS DOESN'T HAPPEN"
 
-let string_of_token = function
-  | RETURN -> "return"
-  | SEMICOLON -> ";"
-  | RPARENT -> ")"
-  | LPARENT -> "("
-  | RBRACE -> "}"
-  | LBRACE -> "{"
-  | LBRACKET -> "]"
-  | RBRACKET -> "]"
-  | STAR -> "*"
-  | COMMA -> ","
-  | INT_LITERAL i -> Printf.sprintf "%d" i
-  | INT_KEYWORD -> "int"
-  | STRING_KEYWORD -> "string"
-  | STRING_LITERAL s -> s
-  | VOID_KEYWORD -> "void"
-  | IDENTIFIER s -> Printf.sprintf "%s" s
-  | EOF -> "EOF"
-  | EQUAL -> "="
-  | IF -> "if"
-  | ELSE -> "else"
+(* let string_of_token = function *)
+(*   | RETURN -> "return" *)
+(*   | SEMICOLON -> ";" *)
+(*   | RPARENT -> ")" *)
+(*   | LPARENT -> "(" *)
+(*   | RBRACE -> "}" *)
+(*   | LBRACE -> "{" *)
+(*   | LBRACKET -> "]" *)
+(*   | RBRACKET -> "]" *)
+(*   | STAR -> "*" *)
+(*   | COMMA -> "," *)
+(*   | INT_LITERAL i -> Printf.sprintf "%d" i *)
+(*   | INT_KEYWORD -> "int" *)
+(*   | STRING_KEYWORD -> "string" *)
+(*   | STRING_LITERAL s -> s *)
+(*   | VOID_KEYWORD -> "void" *)
+(*   | IDENTIFIER s -> Printf.sprintf "%s" s *)
+(*   | EOF -> "EOF" *)
+(*   | EQUAL -> "=" *)
+(*   | IF -> "if" *)
+(*   | ELSE -> "else" *)
+(*   | WHILE -> "while" *)

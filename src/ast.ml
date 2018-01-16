@@ -8,6 +8,7 @@ and statement =
   | FunCallStatement of expression (* FunCallStatement (FunCallExpression (...)) *)
   | DeclarationStatement of builtin_types * string * expression
   | IfStatement of expression * (statement list) * (statement list)
+  | WhileStatement of expression * (statement list)
 and expression =
     Constant of builtin_types
   | FunCallExpression of string * (expression list)
@@ -55,6 +56,13 @@ let print_ast ast =
         List.iter (print_statement (lev ^ " ")) esl;
         Printf.printf "%s}\n" lev
      )
+    | WhileStatement (p, sl) -> (
+        Printf.printf "%sWHILE (" lev;
+        print_expression "" p;
+        Printf.printf "){\n";
+        List.iter (print_statement (lev ^ " ")) sl;
+        Printf.printf "%s}\n" lev
+      )
   and print_expression lev = function
     | Constant t -> Printf.printf "%s%s" lev (string_of_builtin_types_values t)
     | FunCallExpression (n, el) -> (
