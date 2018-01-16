@@ -1,45 +1,54 @@
 open Types
 
 type abstract_syntax_tree =
-    Funcs of toplevel list
+    Toplevel of statement list
 and statement =
-    Return of statement
-  | Constant of builtin_types
-  | FunCall of string * (statement list)
-  | Declaration of builtin_types * string * statement
-and toplevel =
-    FunDecl of builtin_types * string * (string * builtin_types) list * (statement list)
+    ReturnStatement of expression
+  | FunDeclaration of builtin_types * string * (string * builtin_types) list * statement list
+  | FunCallStatement of expression (* FunCallStatement (FunCallExpression (...)) *)
+  | DeclarationStatement of builtin_types * string * expression
+and expression =
+    Constant of builtin_types
+  | FunCallExpression of string * (expression list)
 
 let print_ast ast =
   let rec print_toplevel lev = function
-    | FunDecl (t, id, params, stmts) -> (
+    | FunDeclaration (t, id, params, stmts) -> (
         Printf.printf "%sFUNDECL %s %s PARAMS (" lev (string_of_builtin_types t) id;
         List.iter (fun (n, t) -> Printf.printf "%s %s, " (string_of_builtin_types t) n) params;
         print_string ") [\n";
         List.iter (print_statement (lev ^ "  ")) stmts;
         Printf.printf "%s]\n" lev
       )
+    | _ -> print_string "Shouldn't be in the toplevel\n"
   and print_statement lev = function
-    | Return v -> (
+    |  ReturnStatement e -> (
         Printf.printf "%sRETURN " lev;
-        print_statement "" v;
-        print_endline "";
+        print_expression "" e;
+        print_endline ";";
       )
-    | FunCall (n, params) -> (
-        Printf.printf "%sFUNCALL %s (" lev n;
-        List.iter (fun x -> print_statement "" x; print_string ", ") params;
-        print_string ")"
+    | FunCallStatement e -> (
+        match e with
+        | FunCallExpression (n, el) -> (
+            Printf.printf "%sFUNCALL %s(" lev n;
+            List.iter (fun x -> print_expression "" x; print_string ", ") el;
+            print_endline ");"
+          )
+        | _ -> print_string "FunCallStatement can only contain FunCallStatement"
       )
-    | Constant t -> (
-        print_string (string_of_builtin_types_values t)
-      )
-    | Declaration (t, n, s) -> (
+    | DeclarationStatement (t, n, e) -> (
         Printf.printf "%sDECL %s %s = " lev (string_of_builtin_types t) n;
-        print_statement "" s;
-        Printf.printf "\n"
+        print_expression "" e;
+        print_endline ";"
+      )
+    | FunDeclaration _ -> print_endline "Can't declare a function inside another function"
+  and print_expression lev = function
+    | Constant t -> Printf.printf "%s%s" lev (string_of_builtin_types_values t)
+    | FunCallExpression (n, el) -> (
+        Printf.printf "%sFUNCALL %s(" lev n;
+        List.iter (fun x -> print_expression "" x; print_string ", ") el;
+        print_string ")"
       )
   in
   match ast with
-  | Funcs tl -> (
-      List.iter (print_toplevel "") tl
-    )
+  | Toplevel (sl) -> List.iter (print_toplevel "") sl

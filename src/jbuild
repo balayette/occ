@@ -6,7 +6,7 @@
     (preprocess (pps (ppx_nanocaml sedlex.ppx)))
   )
 )
+
 (menhir(
-  (modules (parser))
-  )
+          (modules (parser)))
 )

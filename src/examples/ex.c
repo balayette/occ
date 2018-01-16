@@ -1,6 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-
 unsigned long fib_it(unsigned long n){
     if(n < 2)
         return n;

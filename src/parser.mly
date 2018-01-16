@@ -25,15 +25,15 @@
 
 program:
   | EOF { None }
-| funcs = nonempty_list(function_declaration); EOF { Some (Ast.Funcs funcs) }
+| funcs = nonempty_list(function_declaration); EOF { Some (Ast.Toplevel funcs) }
 ;
 
 function_declaration:
-  t = type_keyword; name = IDENTIFIER; LPARENT; params = fun_param_list; RPARENT LBRACE; li = statement_list; RBRACE {  Ast.FunDecl (t, name, params, li) }
+  t = type_keyword; name = IDENTIFIER; LPARENT; params = fun_param_list; RPARENT LBRACE; li = statement_list; RBRACE {  Ast.FunDeclaration (t, name, params, li) }
 ;
 
 function_call:
-  name = IDENTIFIER; LPARENT; params = fun_call_param_list; RPARENT { Ast.FunCall (name, params) }
+  name = IDENTIFIER; LPARENT; params = fun_call_param_list; RPARENT { (Ast.FunCallExpression (name, params)) }
 ;
 
 type_keyword:
@@ -43,8 +43,7 @@ type_keyword:
 ;
 
 fun_call_param:
-  a = INT_LITERAL { Ast.Constant (Types.Integer a) }
-| a = STRING_LITERAL {  Ast.Constant (Types.String a) }
+  e = expression { e }
 | a = function_call { a }
 ;
 
@@ -61,18 +60,22 @@ fun_param_list:
 ;
 
 statement_list:
-  li = separated_nonempty_list(SEMICOLON, statement) { li }
+  li = nonempty_list(statement) { li }
 ;
 
 declaration:
-  t = type_keyword; n = IDENTIFIER; EQUAL; s = statement { Ast.Declaration (t, n, s) }
+  t = type_keyword; n = IDENTIFIER; EQUAL; s = expression { Ast.DeclarationStatement (t, n, s) }
+;
+
+expression:
+  i = INT_LITERAL { Ast.Constant (Types.Integer i)}
+  | s = STRING_LITERAL { Ast.Constant (Types.String s)}
+  | c = function_call { c }
 ;
 
 statement:
-   RETURN SEMICOLON { Ast.Return (Ast.Constant (Types.Void ())) }
-  | RETURN; s = statement; SEMICOLON{ Ast.Return s}
-  | c = function_call { c }
-  | i = INT_LITERAL { Ast.Constant (Types.Integer i)}
-  | s = STRING_LITERAL { Ast.Constant (Types.String s)}
-  | d = declaration { d }
+   RETURN SEMICOLON{ Ast.ReturnStatement (Ast.Constant (Types.Void ())) }
+  | RETURN; s = expression; SEMICOLON { Ast.ReturnStatement s}
+  | c = function_call; SEMICOLON {  Ast.FunCallStatement c }
+  | d = declaration; SEMICOLON { d }
 ;

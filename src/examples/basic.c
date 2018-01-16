@@ -1,9 +1,7 @@
-int test(int arg){
+int main(int a, int b){
+    string a = "d";
     int a = 5;
-    string b = "e";
-    return;
-}
-
-void b(void c, int b){
-    return a(1, 2, 3);
+    int b = fun("ddddd");
+    test(5);
+    return a(5, 6, 7);
 }
