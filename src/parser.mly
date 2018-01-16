@@ -1,9 +1,12 @@
 %token RETURN
 
+%token STAR
 %token LBRACE
 %token LPARENT
 %token RBRACE
 %token RPARENT
+%token LBRACKET
+%token RBRACKET
 %token COMMA
 
 %token INT_KEYWORD
@@ -25,7 +28,7 @@
 
 program:
   | EOF { None }
-| funcs = nonempty_list(function_declaration); EOF { Some (Ast.Toplevel funcs) }
+  | funcs = nonempty_list(function_declaration); EOF { Some (Ast.Toplevel funcs) }
 ;
 
 function_declaration:
@@ -67,10 +70,25 @@ declaration:
   t = type_keyword; n = IDENTIFIER; EQUAL; s = expression { Ast.DeclarationStatement (t, n, s) }
 ;
 
+array_access:
+  e1 = expression; LBRACKET; e2 = expression; RBRACKET { Ast.ArrayAccess (e1, e2) }
+;
+
+var_access:
+  s = IDENTIFIER { Ast.VarAccess s }
+;
+
+dereference:
+  STAR; e = expression { Ast.Dereference e }
+;
+
 expression:
   i = INT_LITERAL { Ast.Constant (Types.Integer i)}
   | s = STRING_LITERAL { Ast.Constant (Types.String s)}
   | c = function_call { c }
+  | a = array_access { a }
+  | v = var_access { v }
+  | d = dereference { d }
 ;
 
 statement:

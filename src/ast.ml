@@ -10,6 +10,9 @@ and statement =
 and expression =
     Constant of builtin_types
   | FunCallExpression of string * (expression list)
+  | ArrayAccess of expression * expression
+  | VarAccess of string
+  | Dereference of expression
 
 let print_ast ast =
   let rec print_toplevel lev = function
@@ -48,6 +51,18 @@ let print_ast ast =
         Printf.printf "%sFUNCALL %s(" lev n;
         List.iter (fun x -> print_expression "" x; print_string ", ") el;
         print_string ")"
+      )
+    | ArrayAccess (e1, e2) -> (
+        Printf.printf "%sAR_ACC " lev;
+        print_expression "" e1;
+        print_string "[";
+        print_expression "" e2;
+        print_string "]"
+      )
+    | VarAccess s -> Printf.printf "%sACCESS %s" lev s
+    | Dereference e -> (
+        Printf.printf "%sDEREF " lev;
+        print_expression "" e
       )
   in
   match ast with

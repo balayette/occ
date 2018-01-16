@@ -13,6 +13,9 @@ let rec lex lexbuf =
   | "}" -> update lexbuf; RBRACE
   | "(" -> update lexbuf; LPARENT
   | ")" -> update lexbuf; RPARENT
+  | "[" -> update lexbuf; LBRACKET
+  | "]" -> update lexbuf; RBRACKET
+  | "*" -> update lexbuf; STAR
   | "," -> update lexbuf; COMMA
   | "=" -> update lexbuf; EQUAL
   | "return" -> update lexbuf; RETURN
@@ -34,15 +37,23 @@ let rec lex lexbuf =
   | eof -> update lexbuf; EOF
   | white_space -> update lexbuf; lex lexbuf
   | "\n" -> update lexbuf; new_line lexbuf; lex lexbuf
-  | _ -> failwith "WTF"
+  | any -> (
+      let matched = Sedlexing.Latin1.lexeme buf in
+      Printf.printf "Unknown char : %s\n" matched;
+      failwith "UNKNOWN_CHAR"
+    )
+  | _ -> failwith "THIS DOESN'T HAPPEN"
 
 let string_of_token = function
+  | RETURN -> "return"
   | SEMICOLON -> ";"
   | RPARENT -> ")"
-  | RETURN -> "return"
+  | LPARENT -> "("
   | RBRACE -> "}"
   | LBRACE -> "{"
-  | LPARENT -> "("
+  | LBRACKET -> "]"
+  | RBRACKET -> "]"
+  | STAR -> "*"
   | COMMA -> ","
   | INT_LITERAL i -> Printf.sprintf "%d" i
   | INT_KEYWORD -> "int"

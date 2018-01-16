@@ -11,8 +11,9 @@ type user_struct = {
     | Boolean of bool
     | Struct of user_struct
     | Void of unit
+    | Pointer of builtin_types
 
-let string_of_builtin_types = function
+let rec string_of_builtin_types = function
   | Integer _ -> "int"
   | Floating _ -> "float"
   | Character _ -> "char"
@@ -20,6 +21,7 @@ let string_of_builtin_types = function
   | Boolean _ -> "bool"
   | Struct s -> ("struct " ^ (s.name))
   | Void _ -> "void"
+  | Pointer e -> "*" ^ (string_of_builtin_types e)
 
 let string_of_struct s =
   let rec aux fields = match fields with
@@ -28,7 +30,7 @@ let string_of_struct s =
   in
   Printf.sprintf "struct %s {%s\n}\n" s.name (aux s.fields)
 
-let string_of_builtin_types_values = function
+let rec string_of_builtin_types_values = function
   | Integer i -> Printf.sprintf "int:%d" i
   | Floating f -> Printf.sprintf "float:%f" f
   | Character c -> Printf.sprintf "char:%c" c
@@ -36,3 +38,4 @@ let string_of_builtin_types_values = function
   | Boolean b -> if b then "bool:true" else "bool:false"
   | Struct st -> string_of_struct st
   | Void _ -> "void"
+  | Pointer e -> "*" ^ (string_of_builtin_types_values e)
