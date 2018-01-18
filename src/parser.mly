@@ -18,6 +18,8 @@
 %token MINUS
 %left MINUS
 %left STAR
+%token SLASH
+%left SLASH
 
 %token SMALLER
 %token GREATER
@@ -124,6 +126,7 @@ arithmetic:
   e1 = expression; PLUS; e2 = expression { Ast.Arithmetic (e1, (Ast.Plus), e2) }
 | e1 = expression; MINUS; e2 = expression { Ast.Arithmetic (e1, (Ast.Minus), e2 ) }
 | e1 = expression; STAR; e2 = expression { Ast.Arithmetic (e1, (Ast.Mult), e2) }
+| e1 = expression; SLASH; e2 = expression { Ast.Arithmetic (e1, (Ast.Divide), e2) }
 ;
 
 comparison_op:

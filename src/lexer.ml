@@ -19,6 +19,7 @@ let rec lex lexbuf =
   | "," -> update lexbuf; COMMA
   | "-" -> update lexbuf; MINUS
   | "+" -> update lexbuf; PLUS
+  | "/" -> update lexbuf; SLASH
   | "=" -> update lexbuf; EQUAL
   | "<" -> update lexbuf; SMALLER
   | ">" -> update lexbuf; GREATER

@@ -4,6 +4,7 @@ type arith_op =
     Minus
   | Plus
   | Mult
+  | Divide
 
 type comp_op =
     Equal
@@ -23,6 +24,7 @@ let string_of_arith_op = function
     Plus -> "+"
   | Minus -> "-"
   | Mult -> "*"
+  | Divide -> "/"
 
 type abstract_syntax_tree =
     Toplevel of statement list

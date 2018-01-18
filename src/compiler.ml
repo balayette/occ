@@ -31,6 +31,7 @@ let operand_of_arithmetic = function
     Ast.Plus -> "addl"
   | Ast.Minus -> "subl"
   | Ast.Mult -> "imull"
+  | Ast.Divide -> "idivl"
 
 let rec assembly_of_exp reg = function
   | `Constant t -> (
@@ -59,24 +60,29 @@ let rec assembly_of_exp reg = function
     )
   (* Optimisation : use registers when possible *)
   | `Arithmetic (e1, op, e2) -> (
-      let store = match register_of_int reg with
-        | EAX -> EBX
-        | EBX -> EAX
-        | _ -> failwith "Don't need the other registers for arithmetic"
-      in let regstore = store |> int_of_register in
       String.concat "\n" [
-      (assembly_of_exp regstore e1);
-      Printf.sprintf "push %s" (string_of_regint regstore);
-      (assembly_of_exp reg e2);
-      Printf.sprintf "pop %s" (string_of_regint regstore);
-      Printf.sprintf "addl %s,%s" (string_of_regint regstore) (string_of_regint reg)
-    ]
-
-      (* String.concat "\n" [ *)
-      (*   (assembly_of_exp (int_of_register store) e1); *)
-      (*   (assembly_of_exp reg e2); *)
-      (*   Printf.sprintf "%s %s,%s\n" (operand_of_arithmetic op) (string_of_register store) (string_of_regint reg) *)
-      (* ] *)
+        (assembly_of_exp reg e1);
+        "push %eax";
+        (assembly_of_exp reg e2);
+        "pop %ebx";
+        (match op with
+           Ast.Minus -> (
+             String.concat "\n" [
+               Printf.sprintf "subl %s,%%ebx" (string_of_regint reg);
+               Printf.sprintf "movl %%ebx,%s" (string_of_regint reg);
+               "\n"
+             ]
+           )
+         | Ast.Divide -> (
+             String.concat "\n" [
+               "xorl %edx,%edx";
+               "xchg %ebx,%eax"; (* put e1 in eax, e2 in ebx *)
+               "idivl %ebx"; (* divide by e2, store in %eax *)
+               "\n"
+             ]
+           )
+         | _ -> Printf.sprintf "%s %%ebx,%s" (operand_of_arithmetic op) (string_of_regint reg));
+      ]
     )
   | _ -> "nopexp"
 
@@ -88,7 +94,6 @@ let rec assembly_of_statement = function
         Printf.sprintf "%s:" s;
         "push %ebp";
         "mov %esp,%ebp";
-
         String.concat "\n" (List.map assembly_of_statement sl)
       ]
     )
