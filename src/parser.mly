@@ -14,7 +14,10 @@
 %token STRING_KEYWORD
 
 %token PLUS
+%left PLUS
 %token MINUS
+%left MINUS
+%left STAR
 
 %token SMALLER
 %token GREATER
@@ -120,6 +123,7 @@ while_stmt:
 arithmetic:
   e1 = expression; PLUS; e2 = expression { Ast.Arithmetic (e1, (Ast.Plus), e2) }
 | e1 = expression; MINUS; e2 = expression { Ast.Arithmetic (e1, (Ast.Minus), e2 ) }
+| e1 = expression; STAR; e2 = expression { Ast.Arithmetic (e1, (Ast.Mult), e2) }
 ;
 
 comparison_op:
@@ -134,7 +138,7 @@ comparison:
   e1 = expression; c = comparison_op; e2 = expression { Ast.Comparison (e1, c, e2) }
 ;
 
-expression:
+_expression:
   i = INT_LITERAL { Ast.Constant (Types.Integer i)}
   | s = STRING_LITERAL { Ast.Constant (Types.String s)}
   | c = function_call { c }
@@ -143,6 +147,11 @@ expression:
   | d = dereference { d }
   | a = arithmetic { a }
   | c = comparison { c }
+;
+
+expression:
+  LPARENT; e = _expression; RPARENT { e }
+  | e = _expression { e }
 ;
 
 statement:

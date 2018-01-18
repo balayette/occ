@@ -27,28 +27,58 @@ let register_of_int = function
 
 let string_of_regint x = register_of_int x |> string_of_register
 
+let operand_of_arithmetic = function
+    Ast.Plus -> "addl"
+  | Ast.Minus -> "subl"
+  | Ast.Mult -> "imull"
+
 let rec assembly_of_exp reg = function
   | `Constant t -> (
       match t with
-      | Types.Integer i -> Printf.sprintf "mov $%d,%s\n" i (reg |> register_of_int |> string_of_register)
+      | Types.Integer i -> Printf.sprintf "movl $%d,%s\n" i (reg |> register_of_int |> string_of_register)
       | _ -> failwith "Not supported"
     )
   | `FunCallExpression (s, params) -> (
-      Printf.sprintf "call %s\n" s
+      let rec to_push acc l = match l with
+        | e::l -> (
+            let s = String.concat "\n" [assembly_of_exp (int_of_register EAX) e; "push %eax"] in
+            to_push (s::acc) l
+          )
+        | [] -> acc
+      in let precall = String.concat "\n" (to_push [] params) in
+      let rec to_pop acc = function
+          0 -> acc
+        | e -> to_pop ("pop %esp\n"::acc) (e - 1)
+      in let postcall = to_pop [] (List.length params) |> String.concat "" in
+      String.concat "\n" [
+        precall;
+        Printf.sprintf "call %s" s;
+        postcall
+      ]
+
     )
+  (* Optimisation : use registers when possible *)
   | `Arithmetic (e1, op, e2) -> (
       let store = match register_of_int reg with
         | EAX -> EBX
         | EBX -> EAX
         | _ -> failwith "Don't need the other registers for arithmetic"
-      in
+      in let regstore = store |> int_of_register in
       String.concat "\n" [
-        (assembly_of_exp (int_of_register store) e2);
-        (assembly_of_exp reg e1);
-        Printf.sprintf "add %s,%s\n" (string_of_register store) (string_of_regint reg)
-      ]
+      (assembly_of_exp regstore e1);
+      Printf.sprintf "push %s" (string_of_regint regstore);
+      (assembly_of_exp reg e2);
+      Printf.sprintf "pop %s" (string_of_regint regstore);
+      Printf.sprintf "addl %s,%s" (string_of_regint regstore) (string_of_regint reg)
+    ]
+
+      (* String.concat "\n" [ *)
+      (*   (assembly_of_exp (int_of_register store) e1); *)
+      (*   (assembly_of_exp reg e2); *)
+      (*   Printf.sprintf "%s %s,%s\n" (operand_of_arithmetic op) (string_of_register store) (string_of_regint reg) *)
+      (* ] *)
     )
-  | _ -> "nop"
+  | _ -> "nopexp"
 
 
 let rec assembly_of_statement = function
@@ -56,14 +86,17 @@ let rec assembly_of_statement = function
       String.concat "\n" [
         Printf.sprintf ".globl %s" s;
         Printf.sprintf "%s:" s;
-        String.concat "\n" (List.map assembly_of_statement sl);
+        "push %ebp";
+        "mov %esp,%ebp";
+
+        String.concat "\n" (List.map assembly_of_statement sl)
       ]
     )
   | `ReturnStatement e -> (
-      Printf.sprintf "%sret\n" (assembly_of_exp (int_of_register EAX) e)
+      Printf.sprintf "%s\npop %%ebp\nret\n" (assembly_of_exp (int_of_register EAX) e)
     )
   | `FunCallStatement e -> (assembly_of_exp (int_of_register EAX) e) ^ "\n"
-  | _ -> "nop"
+  | _ -> "nopstatement"
 
 let rec compile_lang lang =
   let prog = match lang with
@@ -85,9 +118,13 @@ let () =
   let lexbuf = Sedlex_menhir.create_lexbuf ~file:"examples/basic.c" (Sedlexing.Latin1.from_channel file) in
   let res = Sedlex_menhir.sedlex_with_menhir Lexer.lex Parser.program lexbuf in
   let ast = get_ast res in
+  Printf.printf "\nAST : \n\n";
   Ast.print_ast ast;
+  Printf.printf "------\n";
   let compiled = compile_lang (ast_to_language ast) in
+  Printf.printf "\nCOMPILED :\n\n";
   print_endline compiled;
+  Printf.printf "------\n";
   let output = open_out "output.s" in
   Printf.fprintf output "%s" compiled;
   close_out output

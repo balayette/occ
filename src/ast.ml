@@ -3,6 +3,7 @@ open Types
 type arith_op =
     Minus
   | Plus
+  | Mult
 
 type comp_op =
     Equal
@@ -21,6 +22,7 @@ let string_of_comp_op = function
 let string_of_arith_op = function
     Plus -> "+"
   | Minus -> "-"
+  | Mult -> "*"
 
 type abstract_syntax_tree =
     Toplevel of statement list
