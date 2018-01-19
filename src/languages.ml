@@ -23,7 +23,7 @@ module%language Base = struct
     ]
 end
 
-module%language LabeledBase = struct
+module%language LabeledIfVar = struct
   include Base
   type lstatement =
     { del : [ `IfStatement of lexpresion * (lstatement list) * (lstatement list)
@@ -38,7 +38,7 @@ module%language LabeledBase = struct
 end
 
 
-let[@pass Base => LabeledBase] label_base =
+let[@pass Base => LabeledIfVar] label_base =
   let label_count = ref (-1) and
   var_count = ref (-1) in
   [%passes

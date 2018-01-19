@@ -6,7 +6,7 @@ int a(){
     if(0){
         return b() + 5;
     }
-    else if(1){
+    else if(b() + 1){
         return b() + 3;
     } else return 1;
 }

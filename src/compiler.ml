@@ -97,7 +97,13 @@ let rec assembly_of_statement = function
       ]
     )
   | `ReturnStatement e -> (
-      Printf.sprintf "%s\npopq %%rbp\nret\n" (assembly_of_exp (int_of_register RAX) e)
+      String.concat "\n" [
+        (assembly_of_exp (int_of_register RAX) e);
+        "movq %rbp,%rsp";
+        "popq %rbp";
+        "ret\n"
+      ]
+      (* Printf.sprintf "%s\npopq %%rbp\nret\n" (assembly_of_exp (int_of_register RAX) e) *)
     )
   | `FunCallStatement e -> (assembly_of_exp (int_of_register RAX) e) ^ "\n"
   | `IfStatement (i, e, sl, esl) -> (
