@@ -1,11 +1,19 @@
 int b(){
-    return 3 - 2 / 2;
+    return 0;
 }
 
 int a(){
-    return 2 + 2 - b();
+    if(0){
+        return b() + 5;
+    }
+    else if(1){
+        return b() + 3;
+    } else return 1;
 }
 
 int main(){
-    return 2 * (a() * 2 + (2 + (2 - 1)) / 2);
+    if(1 - 1)
+        return b();
+    else
+        return a();
 }

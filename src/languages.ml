@@ -23,6 +23,44 @@ module%language Base = struct
     ]
 end
 
+module%language LabeledBase = struct
+  include Base
+  type lstatement =
+    { del : [ `IfStatement of lexpresion * (lstatement list) * (lstatement list)
+            | `WhileStatement of lexpression * (lstatement list)
+            | `DeclarationStatement of builtin_types * string * lexpression
+            ];
+      add : [ `IfStatement of int * lexpression * (lstatement list) * (lstatement list)
+            | `WhileStatement of int * lexpression * (lstatement list)
+            | `DeclarationStatement of int * builtin_types * string * lexpression
+            ]
+    }
+end
+
+
+let[@pass Base => LabeledBase] label_base =
+  let label_count = ref (-1) and
+  var_count = ref (-1) in
+  [%passes
+    let[@entry] rec ast = function
+        `Toplevel (sl [@r] [@l]) -> `Toplevel (sl)
+    and lstatement = function
+       `IfStatement (e, sl [@r] [@l], esl [@r][@l]) -> (
+          label_count := !label_count + 1;
+          `IfStatement (!label_count, e, sl, esl)
+        )
+      | `WhileStatement (e, sl [@r] [@l]) -> (
+          label_count := !label_count + 1;
+          `WhileStatement (!label_count, e, sl)
+        )
+      | `DeclarationStatement (t, s, e) -> (
+          var_count := !var_count + 1;
+          `DeclarationStatement (!var_count, t, s, e)
+        )
+    and lexpression = function
+      `Constant t -> `Constant t
+  ]
+
 let ast_to_language ast =
   let rec ast_toplevel_to_language ast = match ast with
       Toplevel sl -> `Toplevel (ast_stmt_list_to_language sl)
@@ -77,4 +115,4 @@ let ast_to_language ast =
         (ast_exp_to_language e2)
       )
   in
-  ast_toplevel_to_language ast
+  ast_toplevel_to_language ast |> label_base

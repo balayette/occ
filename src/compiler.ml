@@ -1,28 +1,28 @@
 open Languages
 
 type registers =
-    EAX
-  | EBX
-  | ECX
-  | EDX
+    RAX
+  | RBX
+  | RCX
+  | RDX
 
 let string_of_register = function
-    EAX -> "%rax"
-  | EBX -> "%rbx"
-  | ECX -> "%rcx"
-  | EDX -> "%rdx"
+    RAX -> "%rax"
+  | RBX -> "%rbx"
+  | RCX -> "%rcx"
+  | RDX -> "%rdx"
 
 let int_of_register = function
-    EAX -> 0
-  | EBX -> 1
-  | ECX -> 2
-  | EDX -> 4
+    RAX -> 0
+  | RBX -> 1
+  | RCX -> 2
+  | RDX -> 4
 
 let register_of_int = function
-    0 -> EAX
-  | 1 -> EBX
-  | 2 -> ECX
-  | 3 -> EDX
+    0 -> RAX
+  | 1 -> RBX
+  | 2 -> RCX
+  | 3 -> RDX
   | _ -> failwith "not a valid register"
 
 let string_of_regint x = register_of_int x |> string_of_register
@@ -42,7 +42,7 @@ let rec assembly_of_exp reg = function
   | `FunCallExpression (s, params) -> (
       let rec to_push acc l = match l with
         | e::l -> (
-            let s = String.concat "\n" [assembly_of_exp (int_of_register EAX) e; "pushq %rax"] in
+            let s = String.concat "\n" [assembly_of_exp (int_of_register RAX) e; "pushq %rax"] in
             to_push (s::acc) l
           )
         | [] -> acc
@@ -56,7 +56,6 @@ let rec assembly_of_exp reg = function
         Printf.sprintf "call %s" s;
         postcall
       ]
-
     )
   (* Optimisation : use registers when possible *)
   | `Arithmetic (e1, op, e2) -> (
@@ -98,9 +97,20 @@ let rec assembly_of_statement = function
       ]
     )
   | `ReturnStatement e -> (
-      Printf.sprintf "%s\npopq %%rbp\nret\n" (assembly_of_exp (int_of_register EAX) e)
+      Printf.sprintf "%s\npopq %%rbp\nret\n" (assembly_of_exp (int_of_register RAX) e)
     )
-  | `FunCallStatement e -> (assembly_of_exp (int_of_register EAX) e) ^ "\n"
+  | `FunCallStatement e -> (assembly_of_exp (int_of_register RAX) e) ^ "\n"
+  | `IfStatement (i, e, sl, esl) -> (
+      String.concat "\n" [
+        (assembly_of_exp (int_of_register RAX) e);
+        "cmpq $0,%rax";
+        "je ifend" ^ (string_of_int i);
+        String.concat "\n" (List.map (assembly_of_statement) sl);
+        "ifend" ^ (string_of_int i) ^ ":";
+        String.concat "\n" (List.map (assembly_of_statement) esl);
+        "\n"
+      ]
+    )
   | _ -> "nopstatement"
 
 let rec compile_lang lang =
