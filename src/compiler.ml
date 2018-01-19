@@ -7,10 +7,10 @@ type registers =
   | EDX
 
 let string_of_register = function
-    EAX -> "%eax"
-  | EBX -> "%ebx"
-  | ECX -> "%ecx"
-  | EDX -> "%edx"
+    EAX -> "%rax"
+  | EBX -> "%rbx"
+  | ECX -> "%rcx"
+  | EDX -> "%rdx"
 
 let int_of_register = function
     EAX -> 0
@@ -28,28 +28,28 @@ let register_of_int = function
 let string_of_regint x = register_of_int x |> string_of_register
 
 let operand_of_arithmetic = function
-    Ast.Plus -> "addl"
-  | Ast.Minus -> "subl"
-  | Ast.Mult -> "imull"
-  | Ast.Divide -> "idivl"
+    Ast.Plus -> "addq"
+  | Ast.Minus -> "subq"
+  | Ast.Mult -> "imulq"
+  | Ast.Divide -> "idivq"
 
 let rec assembly_of_exp reg = function
   | `Constant t -> (
       match t with
-      | Types.Integer i -> Printf.sprintf "movl $%d,%s\n" i (reg |> register_of_int |> string_of_register)
+      | Types.Integer i -> Printf.sprintf "movq $%d,%s\n" i (reg |> register_of_int |> string_of_register)
       | _ -> failwith "Not supported"
     )
   | `FunCallExpression (s, params) -> (
       let rec to_push acc l = match l with
         | e::l -> (
-            let s = String.concat "\n" [assembly_of_exp (int_of_register EAX) e; "push %eax"] in
+            let s = String.concat "\n" [assembly_of_exp (int_of_register EAX) e; "pushq %rax"] in
             to_push (s::acc) l
           )
         | [] -> acc
       in let precall = String.concat "\n" (to_push [] params) in
       let rec to_pop acc = function
           0 -> acc
-        | e -> to_pop ("pop %esp\n"::acc) (e - 1)
+        | e -> to_pop ("popq %rsp\n"::acc) (e - 1)
       in let postcall = to_pop [] (List.length params) |> String.concat "" in
       String.concat "\n" [
         precall;
@@ -62,26 +62,26 @@ let rec assembly_of_exp reg = function
   | `Arithmetic (e1, op, e2) -> (
       String.concat "\n" [
         (assembly_of_exp reg e1);
-        "push %eax";
+        "pushq %rax";
         (assembly_of_exp reg e2);
-        "pop %ebx";
+        "popq %rbx";
         (match op with
            Ast.Minus -> (
              String.concat "\n" [
-               Printf.sprintf "subl %s,%%ebx" (string_of_regint reg);
-               Printf.sprintf "movl %%ebx,%s" (string_of_regint reg);
+               Printf.sprintf "subq %s,%%rbx" (string_of_regint reg);
+               Printf.sprintf "movq %%rbx,%s" (string_of_regint reg);
                "\n"
              ]
            )
          | Ast.Divide -> (
              String.concat "\n" [
-               "xorl %edx,%edx";
-               "xchg %ebx,%eax"; (* put e1 in eax, e2 in ebx *)
-               "idivl %ebx"; (* divide by e2, store in %eax *)
+               "xchgq %rbx,%rax"; (* put e1 in eax, e2 in ebx *)
+               "cqo"; (* Sign extend rax in rdx *)
+               "idivq %rbx"; (* divide by e2, store in %eax. The modulus is in %rdx *)
                "\n"
              ]
            )
-         | _ -> Printf.sprintf "%s %%ebx,%s" (operand_of_arithmetic op) (string_of_regint reg));
+         | _ -> Printf.sprintf "%s %%rbx,%s" (operand_of_arithmetic op) (string_of_regint reg));
       ]
     )
   | _ -> "nopexp"
@@ -92,13 +92,13 @@ let rec assembly_of_statement = function
       String.concat "\n" [
         Printf.sprintf ".globl %s" s;
         Printf.sprintf "%s:" s;
-        "push %ebp";
-        "mov %esp,%ebp";
+        "pushq %rbp";
+        "movq %rsp,%rbp";
         String.concat "\n" (List.map assembly_of_statement sl)
       ]
     )
   | `ReturnStatement e -> (
-      Printf.sprintf "%s\npop %%ebp\nret\n" (assembly_of_exp (int_of_register EAX) e)
+      Printf.sprintf "%s\npopq %%rbp\nret\n" (assembly_of_exp (int_of_register EAX) e)
     )
   | `FunCallStatement e -> (assembly_of_exp (int_of_register EAX) e) ^ "\n"
   | _ -> "nopstatement"

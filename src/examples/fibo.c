@@ -7,5 +7,5 @@ int a(){
 }
 
 int main(){
-    return a() * 2 + 4 / 2 + 1;
+    return 2 * (a() * 2 + (2 + (2 - 1)) / 2);
 }
