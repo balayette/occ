@@ -8,12 +8,13 @@
 *)
 
 (** The state of the parser, a stream and a position. *)
-type lexbuf = {
+type t = {
   stream : Sedlexing.lexbuf ;
   mutable pos : Lexing.position ;
 }
 
-(** Initialize with the null position. *)
+let get_stream sm = sm.stream
+
 let create_lexbuf ?(file="") stream =
   let pos = {Lexing.
     pos_fname = file;
@@ -23,7 +24,6 @@ let create_lexbuf ?(file="") stream =
   }
   in { pos ; stream }
 
-(** Register a new line in the lexer's position. *)
 let new_line ?(n=0) lexbuf =
   let open Lexing in
   let lcp = lexbuf.pos in
@@ -33,17 +33,14 @@ let new_line ?(n=0) lexbuf =
        pos_bol = lcp.pos_cnum;
     }
 
-(** Update the position with the stream. *)
 let update lexbuf =
   let new_pos = Sedlexing.lexeme_end lexbuf.stream in
   let p = lexbuf.pos in
   lexbuf.pos <- {p with Lexing.pos_cnum = new_pos }
 
-(** The last matched word. *)
 let lexeme { stream } = Sedlexing.Utf8.lexeme stream
 
 
-(** [ParseError (file, line, col, token)] *)
 exception ParseError of (string * int * int * string)
 
 let string_of_ParseError (file, line, cnum, tok) =
@@ -66,7 +63,7 @@ let raise_ParseError lexbuf =
   raise @@ ParseError (pos.pos_fname, line, col, tok)
 
 
-let sedlex_with_menhir lexer' parser' lexbuf =
+let parse lexer' parser' lexbuf =
   let lexer () =
     let ante_position = lexbuf.pos in
     let token = lexer' lexbuf in

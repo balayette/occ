@@ -6,7 +6,7 @@ let string_literal = [%sedlex.regexp? "\"", (Star letter), "\""]
 
 let rec lex lexbuf =
   let open Sedlex_menhir in
-  let buf = lexbuf.stream in
+  let buf = get_stream lexbuf in
   match%sedlex buf with
   | ";" -> update lexbuf; SEMICOLON
   | "{" -> update lexbuf; LBRACE
@@ -31,9 +31,9 @@ let rec lex lexbuf =
       let nbr = Sedlexing.Latin1.lexeme buf |> int_of_string in
       update lexbuf; INT_LITERAL nbr
     )
-  | "int" -> INT_KEYWORD
-  | "string" -> STRING_KEYWORD
-  | "void" -> VOID_KEYWORD
+  | "int" -> update lexbuf; INT_KEYWORD
+  | "string" -> update lexbuf; STRING_KEYWORD
+  | "void" -> update lexbuf; VOID_KEYWORD
   | letter, (Star (letter | number)) -> (
       let id = Sedlexing.Latin1.lexeme buf in
       update lexbuf; IDENTIFIER id
