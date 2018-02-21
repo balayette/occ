@@ -16,7 +16,7 @@ let int_of_register = function
     RAX -> 0
   | RBX -> 1
   | RCX -> 2
-  | RDX -> 4
+  | RDX -> 3
 
 let register_of_int = function
     0 -> RAX
@@ -101,7 +101,7 @@ let rec assembly_of_statement = function
         (assembly_of_exp (int_of_register RAX) e);
         "movq %rbp,%rsp";
         "popq %rbp";
-        "ret\n"
+        "retq\n"
       ]
       (* Printf.sprintf "%s\npopq %%rbp\nret\n" (assembly_of_exp (int_of_register RAX) e) *)
     )

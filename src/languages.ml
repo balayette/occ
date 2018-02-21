@@ -1,6 +1,9 @@
 open Types
 open Ast
 
+(* Nanocaml languages *)
+
+(** 1:1 translation of the ast to a nanocaml language **)
 module%language Base = struct
   type ast = [ `Toplevel of lstatement list
              ]
@@ -23,6 +26,7 @@ module%language Base = struct
     ]
 end
 
+(** Label loops, conditions and variables to make them unique **)
 module%language LabeledIfVar = struct
   include Base
   type lstatement =
@@ -37,6 +41,18 @@ module%language LabeledIfVar = struct
     }
 end
 
+(** Remove variable declarations and move them to the top of the function **)
+module%language VariableDeclarations = struct
+  include LabeledIfVar
+  type lstatement =
+    { del : [ `DeclarationStatement of int * builtin_types * string * lexpression
+            | `FunDeclaration of builtin_types * string * (string * builtin_types) list * statement list
+            ];
+      add : [ `FunDeclaration of Function_data.t * lstatement list ]
+    }
+end
+
+(* Passes *)
 
 let[@pass Base => LabeledIfVar] label_base =
   let label_count = ref (-1) and
@@ -61,7 +77,12 @@ let[@pass Base => LabeledIfVar] label_base =
       `Constant t -> `Constant t
   ]
 
-let ast_to_language ast =
+
+
+(* Helpers*)
+
+(** Translate Ast to Base **)
+let ast_to_poly_lang ast =
   let rec ast_toplevel_to_language ast = match ast with
       Toplevel sl -> `Toplevel (ast_stmt_list_to_language sl)
 
@@ -114,5 +135,14 @@ let ast_to_language ast =
         op,
         (ast_exp_to_language e2)
       )
-  in
-  ast_toplevel_to_language ast |> label_base
+  in ast_toplevel_to_language ast
+
+
+(* Public functions and types *)
+
+let ast_to_language ast =
+  ast_to_poly_lang ast |> label_base
+
+type t = LabeledIfVar.ast
+type tstatement = LabeledIfVar.lstatement
+type texpression = LabeledIfVar.lexpression
