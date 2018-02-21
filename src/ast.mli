@@ -4,6 +4,7 @@ type arith_op =
   | Plus
   | Mult
   | Divide
+[@@deriving show]
 
 (** Comparison operators **)
 type comp_op =
@@ -12,6 +13,7 @@ type comp_op =
   | Greater
   | GreaterOrEqual
   | SmallerOrEqual
+[@@deriving show]
 
 (** Retrieve the string associated with the comparison operator **)
 val string_of_comp_op : comp_op -> string

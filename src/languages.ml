@@ -61,7 +61,7 @@ let[@pass Base => LabeledIfVar] label_base =
     let[@entry] rec ast = function
         `Toplevel (sl [@r] [@l]) -> `Toplevel (sl)
     and lstatement = function
-       `IfStatement (e, sl [@r] [@l], esl [@r][@l]) -> (
+        `IfStatement (e, sl [@r] [@l], esl [@r][@l]) -> (
           label_count := !label_count + 1;
           `IfStatement (!label_count, e, sl, esl)
         )
@@ -74,7 +74,7 @@ let[@pass Base => LabeledIfVar] label_base =
           `DeclarationStatement (!var_count, t, s, e)
         )
     and lexpression = function
-      `Constant t -> `Constant t
+        `Constant t -> `Constant t
   ]
 
 
@@ -141,8 +141,26 @@ let ast_to_poly_lang ast =
 (* Public functions and types *)
 
 let ast_to_language ast =
-  ast_to_poly_lang ast |> label_base
+  let lang = ast_to_poly_lang ast in
+  let labeled = label_base lang in
+  labeled
 
-type t = LabeledIfVar.ast
-type tstatement = LabeledIfVar.lstatement
-type texpression = LabeledIfVar.lexpression
+type t = [ `Toplevel of tstatement list
+         ]
+and tstatement =
+  [ `ReturnStatement of texpression
+  | `FunDeclaration of builtin_types * string * (string * builtin_types) list * tstatement list
+  | `FunCallStatement of texpression
+  | `IfStatement of int * texpression * (tstatement list) * (tstatement list)
+  | `WhileStatement of int * texpression * (tstatement list)
+  | `DeclarationStatement of int * builtin_types * string * texpression
+  ]
+and texpression =
+  [ `Constant of builtin_types
+  | `FunCallExpression of string * (texpression list)
+  | `ArrayAccess of texpression * texpression
+  | `VarAccess of string
+  | `Dereference of texpression
+  | `Arithmetic of texpression * arith_op * texpression
+  | `Comparison of texpression * comp_op * texpression
+  ] [@@deriving show]

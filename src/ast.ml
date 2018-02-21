@@ -5,6 +5,7 @@ type arith_op =
   | Plus
   | Mult
   | Divide
+[@@deriving show]
 
 type comp_op =
     Equal
@@ -12,6 +13,7 @@ type comp_op =
   | Greater
   | GreaterOrEqual
   | SmallerOrEqual
+[@@deriving show]
 
 let string_of_comp_op = function
   | Equal -> "=="
@@ -130,4 +132,4 @@ let rec print_toplevel lev = function
 
 
 let print_ast = function
-  Toplevel (sl) -> List.iter (print_toplevel "") sl
+    Toplevel (sl) -> List.iter (print_toplevel "") sl

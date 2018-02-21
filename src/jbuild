@@ -3,7 +3,7 @@
   executable(
     (name compiler)
     (libraries (batteries menhirLib sedlex))
-    (preprocess (pps (ppx_nanocaml sedlex.ppx)))
+    (preprocess (pps (ppx_nanocaml sedlex.ppx ppx_deriving ppx_deriving.show)))
   )
 )
 

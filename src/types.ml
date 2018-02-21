@@ -13,6 +13,7 @@ type user_struct = {
     | Void of unit
     | Pointer of builtin_types
     | Array of builtin_types * (builtin_types list) * int option
+[@@deriving show]
 
 let string_of_int_option = function
   | Some x -> string_of_int x

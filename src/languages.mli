@@ -12,14 +12,14 @@ and tstatement =
   | `DeclarationStatement of int * builtin_types * string * texpression
   ]
 and texpression =
-  [ `Constant of builtin_types
+  [ `Constant of builtin_types [@printer fun fmt -> fprintf fmt "lul\n"]
   | `FunCallExpression of string * (texpression list)
   | `ArrayAccess of texpression * texpression
   | `VarAccess of string
   | `Dereference of texpression
   | `Arithmetic of texpression * arith_op * texpression
   | `Comparison of texpression * comp_op * texpression
-  ]
+  ] [@@deriving show]
 
 (** Create a nanocaml language from an ast **)
 val ast_to_language : Ast.abstract_syntax_tree -> t

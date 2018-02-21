@@ -141,8 +141,10 @@ let () =
   let ast = get_ast res in
   Printf.printf "\nAST : \n\n";
   Ast.print_ast ast;
-  Printf.printf "------\n";
-  let compiled = compile_lang (ast_to_language ast) in
+  Printf.printf "\n--IR--\n";
+  let lang = ast_to_language ast in
+  (show lang) ^ "\n------\n\n" |> print_string;
+  let compiled = compile_lang lang in
   Printf.printf "\nCOMPILED :\n\n";
   print_endline compiled;
   Printf.printf "------\n";
