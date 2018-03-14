@@ -87,15 +87,29 @@ let rec assembly_of_exp reg = function
 
 
 let rec assembly_of_statement = function
-  | `FunDeclaration (t, s, args, sl) -> (
+    `FunDeclaration (data, sl) -> (
+      let open Function_data in
+      print_string "Variables : \n";
+      print_vars data;
       String.concat "\n" [
-        Printf.sprintf ".globl %s" s;
-        Printf.sprintf "%s:" s;
+        Printf.sprintf ".globl %s" (name data);
+        Printf.sprintf "%s: " (name data);
         "pushq %rbp";
         "movq %rsp,%rbp";
-        String.concat "\n" (List.map assembly_of_statement sl)
+        (* Printf.sprintf "subq %d,%%rsp" (total_offset data); *)
+
+        String.concat "\n" (List.map assembly_of_statement sl);
       ]
     )
+  (* | `FunDeclaration (t, s, args, sl) -> ( *)
+  (*     String.concat "\n" [ *)
+  (*       Printf.sprintf ".globl %s" s; *)
+  (*       Printf.sprintf "%s:" s; *)
+  (*       "pushq %rbp"; *)
+  (*       "movq %rsp,%rbp"; *)
+  (*       String.concat "\n" (List.map assembly_of_statement sl) *)
+  (*     ] *)
+  (*   ) *)
   | `ReturnStatement e -> (
       String.concat "\n" [
         (assembly_of_exp (int_of_register RAX) e);

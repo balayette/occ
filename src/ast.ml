@@ -37,6 +37,7 @@ and statement =
   | DeclarationStatement of builtin_types * string * expression
   | IfStatement of expression * (statement list) * (statement list)
   | WhileStatement of expression * (statement list)
+  | Nop
 and expression =
     Constant of builtin_types
   | FunCallExpression of string * (expression list)
@@ -119,6 +120,7 @@ let rec print_statement lev = function
       List.iter (print_statement (lev ^ " ")) sl;
       Printf.printf "%s}\n" lev
     )
+  | Nop -> ()
 
 let rec print_toplevel lev = function
   | FunDeclaration (t, id, params, stmts) -> (

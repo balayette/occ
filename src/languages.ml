@@ -14,6 +14,7 @@ module%language Base = struct
     | `DeclarationStatement of builtin_types * string * lexpression
     | `IfStatement of lexpression * (lstatement list) * (lstatement list)
     | `WhileStatement of lexpression * (lstatement list)
+    | `Nop
     ]
   and lexpression =
     [ `Constant of builtin_types
@@ -77,7 +78,40 @@ let[@pass Base => LabeledIfVar] label_base =
         `Constant t -> `Constant t
   ]
 
-
+let[@pass LabeledIfVar => VariableDeclarations] declare_variables =
+  let vars = Stack.create ()
+  and leaf = ref true in
+  let rec make_fdata () = match Stack.pop vars with
+      (t, n) as x -> x::(make_fdata ())
+    | exception Stack.Empty -> []
+  in
+  [%passes
+    let[@entry] rec ast = function
+        `Toplevel (sl [@r] [@l]) -> `Toplevel (sl)
+    and lstatement = function
+        `DeclarationStatement (c, t, n, e) -> (
+          Stack.push (t, string_of_int c ^ n) vars;
+          `Nop
+        )
+      | `FunDeclaration (t, n, args, sl [@r] [@l]) -> (
+          let a = `FunDeclaration (
+              Function_data.create_fdata t n args (make_fdata ()) !leaf,
+              sl
+            ) in
+          Stack.clear vars;
+          leaf := true;
+          a
+        )
+      | `FunCallStatement (e) -> (
+          leaf := false;
+          `FunCallStatement (e)
+        )
+    and lexpression = function
+        `FunCallExpression (s, el) -> (
+          leaf := false;
+          `FunCallExpression (s, el)
+        )
+  ]
 
 (* Helpers*)
 
@@ -111,6 +145,7 @@ let ast_to_poly_lang ast =
         (ast_exp_to_language e),
         (ast_stmt_list_to_language sl)
       )
+    | Nop -> `Nop
   and ast_exp_list_to_language l = List.map (ast_exp_to_language) l
 
   and ast_exp_to_language (e : Ast.expression) = match e with
@@ -143,17 +178,17 @@ let ast_to_poly_lang ast =
 let ast_to_language ast =
   let lang = ast_to_poly_lang ast in
   let labeled = label_base lang in
-  labeled
+  labeled |> declare_variables
 
 type t = [ `Toplevel of tstatement list
          ]
 and tstatement =
   [ `ReturnStatement of texpression
-  | `FunDeclaration of builtin_types * string * (string * builtin_types) list * tstatement list
   | `FunCallStatement of texpression
   | `IfStatement of int * texpression * (tstatement list) * (tstatement list)
   | `WhileStatement of int * texpression * (tstatement list)
-  | `DeclarationStatement of int * builtin_types * string * texpression
+  | `FunDeclaration of Function_data.t * tstatement list
+  | `Nop
   ]
 and texpression =
   [ `Constant of builtin_types

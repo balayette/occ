@@ -31,6 +31,7 @@ and statement =
   | DeclarationStatement of Types.builtin_types * string * expression
   | IfStatement of expression * (statement list) * (statement list)
   | WhileStatement of expression * (statement list)
+  | Nop
 and expression =
     Constant of Types.builtin_types
   | FunCallExpression of string * (expression list)
