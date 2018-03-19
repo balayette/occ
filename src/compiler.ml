@@ -87,20 +87,20 @@ let rec assembly_of_exp reg = function
 
 
 let rec assembly_of_statement = function
-    `FunDeclaration (data, sl) -> (
-      let open Function_data in
-      print_string "Variables : \n";
-      print_vars data;
-      String.concat "\n" [
-        Printf.sprintf ".globl %s" (name data);
-        Printf.sprintf "%s: " (name data);
-        "pushq %rbp";
-        "movq %rsp,%rbp";
-        (* Printf.sprintf "subq %d,%%rsp" (total_offset data); *)
+    (* `FunDeclaration (data, sl) -> ( *)
+    (*   let open Function_data in *)
+    (*   print_string "Variables : \n"; *)
+    (*   print_vars data; *)
+    (*   String.concat "\n" [ *)
+    (*     Printf.sprintf ".globl %s" (name data); *)
+    (*     Printf.sprintf "%s: " (name data); *)
+    (*     "pushq %rbp"; *)
+    (*     "movq %rsp,%rbp"; *)
+    (*     (\* Printf.sprintf "subq %d,%%rsp" (total_offset data); *\) *)
 
-        String.concat "\n" (List.map assembly_of_statement sl);
-      ]
-    )
+    (*     String.concat "\n" (List.map assembly_of_statement sl); *)
+    (*   ] *)
+    (* ) *)
   (* | `FunDeclaration (t, s, args, sl) -> ( *)
   (*     String.concat "\n" [ *)
   (*       Printf.sprintf ".globl %s" s; *)
@@ -120,17 +120,17 @@ let rec assembly_of_statement = function
       (* Printf.sprintf "%s\npopq %%rbp\nret\n" (assembly_of_exp (int_of_register RAX) e) *)
     )
   | `FunCallStatement e -> (assembly_of_exp (int_of_register RAX) e) ^ "\n"
-  | `IfStatement (i, e, sl, esl) -> (
-      String.concat "\n" [
-        (assembly_of_exp (int_of_register RAX) e);
-        "cmpq $0,%rax";
-        "je ifend" ^ (string_of_int i);
-        String.concat "\n" (List.map (assembly_of_statement) sl);
-        "ifend" ^ (string_of_int i) ^ ":";
-        String.concat "\n" (List.map (assembly_of_statement) esl);
-        "\n"
-      ]
-    )
+  (* | `IfStatement (i, e, sl, esl) -> ( *)
+  (*     String.concat "\n" [ *)
+  (*       (assembly_of_exp (int_of_register RAX) e); *)
+  (*       "cmpq $0,%rax"; *)
+  (*       "je ifend" ^ (string_of_int i); *)
+  (*       String.concat "\n" (List.map (assembly_of_statement) sl); *)
+  (*       "ifend" ^ (string_of_int i) ^ ":"; *)
+  (*       String.concat "\n" (List.map (assembly_of_statement) esl); *)
+  (*       "\n" *)
+  (*     ] *)
+  (*   ) *)
   | _ -> "nopstatement"
 
 let rec compile_lang lang =

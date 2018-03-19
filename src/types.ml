@@ -50,3 +50,8 @@ let rec string_of_builtin_types_values = function
       let c = String.concat ", " (List.map (string_of_builtin_types_values) e) in
       Printf.sprintf "%s[%s] {%s}" (string_of_builtin_types t) (string_of_int_option l) c;
     )
+
+let size_of_type = function
+    Integer _ -> 8
+  | Character _ -> 1
+  | _ -> failwith "size_of_type : Not Implemented"

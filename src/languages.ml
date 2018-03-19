@@ -27,7 +27,7 @@ module%language Base = struct
     ]
 end
 
-(** Label loops, conditions and variables to make them unique **)
+(* Label loops, conditions and variables to make them unique **)
 module%language LabeledIfVar = struct
   include Base
   type lstatement =
@@ -42,16 +42,22 @@ module%language LabeledIfVar = struct
     }
 end
 
-(** Remove variable declarations and move them to the top of the function **)
-module%language VariableDeclarations = struct
+(* Create scopes, check if the function is a leaf, and check that variables
+   aren't accessed before they're created *)
+module%language WithScope = struct
   include LabeledIfVar
   type lstatement =
-    { del : [ `DeclarationStatement of int * builtin_types * string * lexpression
-            | `FunDeclaration of builtin_types * string * (string * builtin_types) list * statement list
+    { del : [ `FunDeclaration of builtin_types * string * (string * builtin_types) list * statement list
+            | `IfStatement of int * lexpression * (lstatement list) * (lstatement list)
+            | `WhileStatement of int * lexpression * (lstatement list)
             ];
-      add : [ `FunDeclaration of Function_data.t * lstatement list ]
+      add : [ `FunDeclaration of Function_data.t * Scope.t * lstatement list * bool
+            | `IfStatement of int * lexpression * (lstatement list) * (lstatement list) * Scope.t
+            | `WhileStatement of int * lexpression * (lstatement list) * Scope.t
+            ]
     }
 end
+
 
 (* Passes *)
 
@@ -78,38 +84,46 @@ let[@pass Base => LabeledIfVar] label_base =
         `Constant t -> `Constant t
   ]
 
-let[@pass LabeledIfVar => VariableDeclarations] declare_variables =
-  let vars = Stack.create ()
-  and leaf = ref true in
-  let rec make_fdata () = match Stack.pop vars with
-      (t, n) as x -> x::(make_fdata ())
-    | exception Stack.Empty -> []
-  in
+let[@pass LabeledIfVar => WithScope] scopify =
+  let leaf = ref true in
+  let scope = ref (Scope.empty ()) in
   [%passes
     let[@entry] rec ast = function
         `Toplevel (sl [@r] [@l]) -> `Toplevel (sl)
     and lstatement = function
-        `DeclarationStatement (c, t, n, e) -> (
-          Stack.push (t, string_of_int c ^ n) vars;
-          `Nop
-        )
-      | `FunDeclaration (t, n, args, sl [@r] [@l]) -> (
-          let a = `FunDeclaration (
-              Function_data.create_fdata t n args (make_fdata ()) !leaf,
-              sl
-            ) in
-          Stack.clear vars;
+        `FunDeclaration (t, n, args, sl [@r] [@l]) -> (
+          let data = Function_data.create_fdata t n args in
+          let r = `FunDeclaration(data, !scope, sl, !leaf) in
+          scope := Scope.empty ();
           leaf := true;
-          a
+          r
         )
       | `FunCallStatement (e) -> (
           leaf := false;
           `FunCallStatement (e)
         )
+      | `IfStatement (i, p, sl [@r] [@l], esl [@r] [@l]) -> (
+          let par = !scope in
+          scope := Scope.nested par;
+          let r = `IfStatement (i, p, sl, esl, !scope) in
+          scope := Scope.update_parent par !scope;
+          r
+        )
+      | `WhileStatement (i, p, sl [@r] [@l]) -> (
+          let par = !scope in
+          scope := Scope.nested par;
+          let r = `WhileStatement (i, p, sl, !scope) in
+          scope := Scope.update_parent par !scope;
+          r
+        )
+      | `DeclarationStatement (i, t, s, e) -> (
+          scope := Scope.add_local !scope (s, t);
+          `DeclarationStatement (i, t, s, e)
+        )
     and lexpression = function
         `FunCallExpression (s, el) -> (
           leaf := false;
-          `FunCallExpression (s, el)
+          `FunCallExpression(s, el)
         )
   ]
 
@@ -178,16 +192,18 @@ let ast_to_poly_lang ast =
 let ast_to_language ast =
   let lang = ast_to_poly_lang ast in
   let labeled = label_base lang in
-  labeled |> declare_variables
+  let scoped = scopify labeled in
+  scoped
 
 type t = [ `Toplevel of tstatement list
          ]
 and tstatement =
   [ `ReturnStatement of texpression
   | `FunCallStatement of texpression
-  | `IfStatement of int * texpression * (tstatement list) * (tstatement list)
-  | `WhileStatement of int * texpression * (tstatement list)
-  | `FunDeclaration of Function_data.t * tstatement list
+  | `IfStatement of int * texpression * (tstatement list) * (tstatement list) * Scope.t
+  | `FunDeclaration of Function_data.t * Scope.t * tstatement list * bool
+  | `WhileStatement of int * texpression * (tstatement list) * Scope.t
+  | `DeclarationStatement of int * Types.builtin_types * string * texpression
   | `Nop
   ]
 and texpression =
